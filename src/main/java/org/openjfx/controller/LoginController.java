@@ -184,6 +184,9 @@ public class LoginController {
     private void showDashboard(Admin admin) {
         DashboardController dashboardController = new DashboardController(stage, admin);
         Scene dashboardScene = dashboardController.getScene();
+        
+        // Enable resizing for dashboard (it was disabled for login)
+        stage.setResizable(true);
         stage.setScene(dashboardScene);
         stage.setTitle("Stadium Management System - Dashboard");
     }

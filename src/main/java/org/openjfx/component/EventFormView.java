@@ -167,8 +167,9 @@ public class EventFormView extends VBox {
         Label statusLabel = new Label("Status");
         statusLabel.setFont(Font.font("System", FontWeight.SEMI_BOLD, 13));
         statusCombo = new ComboBox<>();
-        statusCombo.getItems().addAll("UPCOMING", "ONGOING", "COMPLETED", "CANCELLED");
-        statusCombo.setValue("UPCOMING");
+        // Database constraint requires: 'Active', 'Cancelled', 'Completed'
+        statusCombo.getItems().addAll("Active", "Cancelled", "Completed");
+        statusCombo.setValue("Active");
         statusCombo.setStyle("-fx-pref-height: 35; -fx-font-size: 13;");
         statusCombo.setMaxWidth(Double.MAX_VALUE);
         
@@ -493,11 +494,14 @@ public class EventFormView extends VBox {
                 boolean success;
                 Event event;
                 
+                // Map combo box value to database event type
+                String eventType = typeCombo.getValue().toUpperCase().contains("FOOTBALL") ? "Football" : "Concert";
+                
                 if (existingEvent == null) {
                     // Create new event
                     event = new Event(
                         nameField.getText().trim(),
-                        typeCombo.getValue(),
+                        eventType,
                         datePicker.getValue(),
                         time,
                         descArea.getText().trim(),
@@ -509,7 +513,7 @@ public class EventFormView extends VBox {
                     // Update existing event
                     event = existingEvent;
                     event.setEventName(nameField.getText().trim());
-                    event.setEventType(typeCombo.getValue());
+                    event.setEventType(eventType);
                     event.setEventDate(datePicker.getValue());
                     event.setEventTime(time);
                     event.setDescription(descArea.getText().trim());
