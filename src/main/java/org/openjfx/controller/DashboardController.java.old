@@ -1,0 +1,983 @@
+package org.openjfx.controller;
+
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.*;
+import javafx.scene.layout.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import org.openjfx.model.Admin;
+import org.openjfx.util.IconUtil;
+import org.openjfx.model.*;
+import org.openjfx.service.*;
+
+/**
+ * Main Dashboard Controller with Navigation
+ */
+public class DashboardController {
+    
+    private Stage stage;
+    private Admin admin;
+    private BorderPane mainLayout;
+    private VBox navigationMenu;
+    private StackPane contentArea;
+    
+    public DashboardController(Stage stage, Admin admin) {
+        this.stage = stage;
+        this.admin = admin;
+    }
+    
+    /**
+     * Create and return the dashboard scene
+     */
+    public Scene getScene() {
+        mainLayout = new BorderPane();
+        
+        // Create navigation menu (left sidebar)
+        navigationMenu = createNavigationMenu();
+        mainLayout.setLeft(navigationMenu);
+        
+        // Create content area (center)
+        contentArea = new StackPane();
+        contentArea.setStyle("-fx-background-color: #ecf0f1;");
+        mainLayout.setCenter(contentArea);
+        
+        // Show home page by default
+        showHomePage();
+        
+        Scene scene = new Scene(mainLayout, 1200, 800);
+        
+        // Make main window fullscreen
+        stage.setMaximized(true);
+        
+        return scene;
+    }
+    
+    /**
+     * Create the navigation menu sidebar
+     */
+    private VBox createNavigationMenu() {
+        VBox menu = new VBox(5);
+        menu.setPrefWidth(220);
+        menu.setStyle("-fx-background-color: #2c3e50;");
+        menu.setPadding(new Insets(20, 10, 20, 10));
+        
+        // Header section
+        VBox header = new VBox(10);
+        header.setAlignment(Pos.CENTER);
+        header.setPadding(new Insets(0, 0, 20, 0));
+        
+        Label systemTitle = new Label("Stadium");
+        systemTitle.setFont(Font.font("Arial", FontWeight.BOLD, 20));
+        systemTitle.setStyle("-fx-text-fill: white;");
+        
+        Label systemSubtitle = new Label("Management System");
+        systemSubtitle.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
+        systemSubtitle.setStyle("-fx-text-fill: #bdc3c7;");
+        
+        // User info
+        HBox userBox = new HBox(8);
+        userBox.setAlignment(Pos.CENTER);
+        userBox.setPadding(new Insets(10, 0, 0, 0));
+        
+        FontAwesomeIconView userIcon = IconUtil.createWhiteIcon(FontAwesomeIcon.USER, 14);
+        Label userLabel = new Label(admin.getUsername());
+        userLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 13));
+        userLabel.setStyle("-fx-text-fill: #ecf0f1;");
+        
+        userBox.getChildren().addAll(userIcon, userLabel);
+        
+        header.getChildren().addAll(systemTitle, systemSubtitle, userBox);
+        
+        // Separator
+        Region separator = new Region();
+        separator.setPrefHeight(1);
+        separator.setStyle("-fx-background-color: #34495e;");
+        separator.setMaxWidth(180);
+        
+        // Menu buttons
+        Button homeButton = createMenuButton("Dashboard", FontAwesomeIcon.HOME, true);
+        Button eventsButton = createMenuButton("Events", FontAwesomeIcon.CALENDAR, false);
+        Button seatsButton = createMenuButton("Seats", FontAwesomeIcon.TH, false);
+        Button bookingsButton = createMenuButton("Bookings", FontAwesomeIcon.TICKET, false);
+        Button reportsButton = createMenuButton("Reports", FontAwesomeIcon.BAR_CHART, false);
+        
+        // Spacer to push logout button to bottom
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+        
+        // Logout button
+        Button logoutButton = createMenuButton("Logout", FontAwesomeIcon.SIGN_OUT, false);
+        logoutButton.setStyle("-fx-background-color: #c0392b; -fx-text-fill: white; " +
+                             "-fx-font-size: 13px; -fx-padding: 12px; " +
+                             "-fx-background-radius: 5; -fx-cursor: hand; -fx-alignment: center-left;");
+        
+        // Button actions
+        homeButton.setOnAction(e -> {
+            highlightButton(homeButton, eventsButton, seatsButton, bookingsButton, reportsButton);
+            showHomePage();
+        });
+        
+        eventsButton.setOnAction(e -> {
+            highlightButton(eventsButton, homeButton, seatsButton, bookingsButton, reportsButton);
+            showEventsPage();
+        });
+        
+        seatsButton.setOnAction(e -> {
+            highlightButton(seatsButton, homeButton, eventsButton, bookingsButton, reportsButton);
+            showSeatsPage();
+        });
+        
+        bookingsButton.setOnAction(e -> {
+            highlightButton(bookingsButton, homeButton, eventsButton, seatsButton, reportsButton);
+            showBookingsPage();
+        });
+        
+        reportsButton.setOnAction(e -> {
+            highlightButton(reportsButton, homeButton, eventsButton, seatsButton, bookingsButton);
+            showReportsPage();
+        });
+        
+        logoutButton.setOnAction(e -> handleLogout());
+        
+        menu.getChildren().addAll(
+            header,
+            separator,
+            new Label(), // spacing
+            homeButton,
+            eventsButton,
+            seatsButton,
+            bookingsButton,
+            reportsButton,
+            spacer,
+            logoutButton
+        );
+        
+        return menu;
+    }
+    
+    /**
+     * Create a menu button with consistent styling and icon
+     */
+    private Button createMenuButton(String text, FontAwesomeIcon icon, boolean isActive) {
+        Button button = new Button();
+        button.setPrefWidth(200);
+        button.setMaxWidth(Double.MAX_VALUE);
+        
+        // Create HBox for icon + text
+        HBox content = new HBox(10);
+        content.setAlignment(Pos.CENTER_LEFT);
+        
+        FontAwesomeIconView iconView = new FontAwesomeIconView(icon);
+        iconView.setSize("16");
+        iconView.setStyle("-fx-fill: white;");
+        
+        Label textLabel = new Label(text);
+        textLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13px;");
+        
+        content.getChildren().addAll(iconView, textLabel);
+        button.setGraphic(content);
+        
+        if (isActive) {
+            button.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; " +
+                          "-fx-font-size: 13px; -fx-padding: 12px; " +
+                          "-fx-background-radius: 5; -fx-cursor: hand; -fx-alignment: center-left;");
+        } else {
+            button.setStyle("-fx-background-color: transparent; -fx-text-fill: #ecf0f1; " +
+                          "-fx-font-size: 13px; -fx-padding: 12px; " +
+                          "-fx-background-radius: 5; -fx-cursor: hand; -fx-alignment: center-left;");
+        }
+        
+        // Hover effect for inactive buttons
+        if (!isActive) {
+            button.setOnMouseEntered(e -> 
+                button.setStyle("-fx-background-color: #34495e; -fx-text-fill: white; " +
+                              "-fx-font-size: 13px; -fx-padding: 12px; " +
+                              "-fx-background-radius: 5; -fx-cursor: hand; -fx-alignment: center-left;")
+            );
+            button.setOnMouseExited(e -> 
+                button.setStyle("-fx-background-color: transparent; -fx-text-fill: #ecf0f1; " +
+                              "-fx-font-size: 13px; -fx-padding: 12px; " +
+                              "-fx-background-radius: 5; -fx-cursor: hand; -fx-alignment: center-left;")
+            );
+        }
+        
+        return button;
+    }
+    
+    /**
+     * Highlight the active button
+     */
+    private void highlightButton(Button active, Button... others) {
+        active.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; " +
+                       "-fx-font-size: 13px; -fx-padding: 12px; " +
+                       "-fx-background-radius: 5; -fx-cursor: hand; -fx-alignment: center-left;");
+        
+        for (Button button : others) {
+            button.setStyle("-fx-background-color: transparent; -fx-text-fill: #ecf0f1; " +
+                          "-fx-font-size: 13px; -fx-padding: 12px; " +
+                          "-fx-background-radius: 5; -fx-cursor: hand; -fx-alignment: center-left;");
+            
+            // Re-add hover effects
+            button.setOnMouseEntered(e -> 
+                button.setStyle("-fx-background-color: #34495e; -fx-text-fill: white; " +
+                              "-fx-font-size: 13px; -fx-padding: 12px; " +
+                              "-fx-background-radius: 5; -fx-cursor: hand; -fx-alignment: center-left;")
+            );
+            button.setOnMouseExited(e -> 
+                button.setStyle("-fx-background-color: transparent; -fx-text-fill: #ecf0f1; " +
+                              "-fx-font-size: 13px; -fx-padding: 12px; " +
+                              "-fx-background-radius: 5; -fx-cursor: hand; -fx-alignment: center-left;")
+            );
+        }
+    }
+    
+    /**
+     * Show home/dashboard page
+     */
+    private void showHomePage() {
+        VBox homePage = new VBox(30);
+        homePage.setPadding(new Insets(40));
+        homePage.setAlignment(Pos.TOP_LEFT);
+        
+        // Page title
+        Label titleLabel = new Label("Dashboard Overview");
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));
+        titleLabel.setStyle("-fx-text-fill: #2c3e50;");
+        
+        Label welcomeLabel = new Label("Welcome back, " + admin.getUsername() + "!");
+        welcomeLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
+        welcomeLabel.setStyle("-fx-text-fill: #7f8c8d;");
+        
+        // Statistics cards
+        HBox statsBox = new HBox(20);
+        statsBox.setAlignment(Pos.CENTER_LEFT);
+        
+        VBox eventsCard = createStatCard(FontAwesomeIcon.CALENDAR, "Total Events", "0", "#3498db");
+        VBox bookingsCard = createStatCard(FontAwesomeIcon.TICKET, "Today's Bookings", "0", "#2ecc71");
+        VBox revenueCard = createStatCard(FontAwesomeIcon.DOLLAR, "Revenue", "$0", "#f39c12");
+        VBox seatsCard = createStatCard(FontAwesomeIcon.TH, "Available Seats", "0", "#9b59b6");
+        
+        statsBox.getChildren().addAll(eventsCard, bookingsCard, revenueCard, seatsCard);
+        
+        // Recent activity section
+        Label recentLabel = new Label("Recent Activity");
+        recentLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 18));
+        recentLabel.setStyle("-fx-text-fill: #2c3e50;");
+        
+        VBox activityBox = new VBox(10);
+        activityBox.setPadding(new Insets(20));
+        activityBox.setStyle("-fx-background-color: white; -fx-background-radius: 10; " +
+                            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 3);");
+        
+        Label noActivityLabel = new Label("No recent activity. Start by creating an event!");
+        noActivityLabel.setFont(Font.font("Arial", 14));
+        noActivityLabel.setStyle("-fx-text-fill: #95a5a6;");
+        
+        activityBox.getChildren().add(noActivityLabel);
+        
+        homePage.getChildren().addAll(titleLabel, welcomeLabel, statsBox, recentLabel, activityBox);
+        
+        // Wrap in ScrollPane for scrollability
+        ScrollPane scrollPane = new ScrollPane(homePage);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setStyle("-fx-background: #ecf0f1; -fx-background-color: #ecf0f1;");
+        
+        contentArea.getChildren().clear();
+        contentArea.getChildren().add(scrollPane);
+    }
+    
+    /**
+     * Create a statistics card with FontAwesome icon
+     */
+    private VBox createStatCard(FontAwesomeIcon icon, String title, String value, String color) {
+        VBox card = new VBox(10);
+        card.setPrefSize(200, 120);
+        card.setAlignment(Pos.CENTER);
+        card.setPadding(new Insets(20));
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 10; " +
+                     "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 3);");
+        
+        FontAwesomeIconView iconView = new FontAwesomeIconView(icon);
+        iconView.setSize("40");
+        iconView.setStyle("-fx-fill: " + color + ";");
+        
+        Label valueLabel = new Label(value);
+        valueLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        valueLabel.setStyle("-fx-text-fill: " + color + ";");
+        
+        Label titleLabel = new Label(title);
+        titleLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 13));
+        titleLabel.setStyle("-fx-text-fill: #7f8c8d;");
+        
+        card.getChildren().addAll(iconView, valueLabel, titleLabel);
+        
+        return card;
+    }
+    
+    /**
+     * Show events page (placeholder)
+     */
+    private void showEventsPage() {
+        VBox page = new VBox(20);
+        page.setPadding(new Insets(30));
+        page.setStyle("-fx-background-color: #f5f5f5;");
+
+        // Title and controls bar
+        HBox titleBar = new HBox(20);
+        titleBar.setAlignment(Pos.CENTER_LEFT);
+
+        Label title = new Label("Events Management");
+        title.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button createBtn = new Button("Create Event");
+        createBtn.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-size: 14px; " +
+                          "-fx-padding: 10 20; -fx-cursor: hand;");
+        FontAwesomeIconView createIcon = new FontAwesomeIconView(FontAwesomeIcon.PLUS);
+        createIcon.setSize("16");
+        createIcon.setFill(javafx.scene.paint.Color.WHITE);
+        createBtn.setGraphic(createIcon);
+        createBtn.setOnAction(e -> showCreateEventDialog());
+
+        titleBar.getChildren().addAll(title, spacer, createBtn);
+
+        // Search and filter bar
+        HBox filterBar = new HBox(15);
+        filterBar.setAlignment(Pos.CENTER_LEFT);
+        filterBar.setPadding(new Insets(10, 0, 10, 0));
+
+        TextField searchField = new TextField();
+        searchField.setPromptText("🔍 Search events...");
+        searchField.setPrefWidth(300);
+        searchField.setStyle("-fx-font-size: 14px; -fx-padding: 8;");
+
+        ComboBox<String> typeFilter = new ComboBox<>();
+        typeFilter.getItems().addAll("All Types", "Football Match", "Concert", "Basketball", "Conference", "Other");
+        typeFilter.setValue("All Types");
+        typeFilter.setPrefWidth(180);
+        typeFilter.setStyle("-fx-font-size: 14px;");
+
+        ComboBox<String> statusFilter = new ComboBox<>();
+        statusFilter.getItems().addAll("All Status", "UPCOMING", "ONGOING", "COMPLETED", "CANCELLED");
+        statusFilter.setValue("All Status");
+        statusFilter.setPrefWidth(180);
+        statusFilter.setStyle("-fx-font-size: 14px;");
+
+        Button refreshBtn = new Button("Refresh");
+        refreshBtn.setStyle("-fx-font-size: 14px; -fx-padding: 8 15; -fx-cursor: hand;");
+        FontAwesomeIconView refreshIcon = new FontAwesomeIconView(FontAwesomeIcon.REFRESH);
+        refreshIcon.setSize("14");
+        refreshBtn.setGraphic(refreshIcon);
+
+        filterBar.getChildren().addAll(searchField, typeFilter, statusFilter, refreshBtn);
+
+        // Events table
+        TableView<Event> eventsTable = new TableView<>();
+        eventsTable.setStyle("-fx-background-color: white; -fx-font-size: 13px;");
+        eventsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        // Table columns
+        TableColumn<Event, Integer> idCol = new TableColumn<>("ID");
+        idCol.setCellValueFactory(data -> new javafx.beans.property.SimpleIntegerProperty(data.getValue().getId()).asObject());
+        idCol.setPrefWidth(50);
+
+        TableColumn<Event, String> nameCol = new TableColumn<>("Event Name");
+        nameCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getEventName()));
+        nameCol.setPrefWidth(200);
+
+        TableColumn<Event, String> typeCol = new TableColumn<>("Type");
+        typeCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getEventType()));
+        typeCol.setPrefWidth(120);
+
+        TableColumn<Event, String> dateCol = new TableColumn<>("Date");
+        dateCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+            data.getValue().getEventDate().toString()));
+        dateCol.setPrefWidth(100);
+
+        TableColumn<Event, String> timeCol = new TableColumn<>("Time");
+        timeCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+            data.getValue().getEventTime().toString()));
+        timeCol.setPrefWidth(80);
+
+        TableColumn<Event, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getStatus()));
+        statusCol.setPrefWidth(100);
+        statusCol.setCellFactory(col -> new TableCell<Event, String>() {
+            @Override
+            protected void updateItem(String status, boolean empty) {
+                super.updateItem(status, empty);
+                if (empty || status == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(status);
+                    String color;
+                    switch (status) {
+                        case "UPCOMING":
+                            color = "#3498db";
+                            break;
+                        case "ONGOING":
+                            color = "#27ae60";
+                            break;
+                        case "COMPLETED":
+                            color = "#95a5a6";
+                            break;
+                        case "CANCELLED":
+                            color = "#e74c3c";
+                            break;
+                        default:
+                            color = "#7f8c8d";
+                            break;
+                    }
+                    setStyle("-fx-text-fill: " + color + "; -fx-font-weight: bold;");
+                }
+            }
+        });
+
+        TableColumn<Event, String> seatsCol = new TableColumn<>("Seats");
+        seatsCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+            data.getValue().getBookedSeats() + "/" + data.getValue().getTotalSeats()));
+        seatsCol.setPrefWidth(80);
+
+        TableColumn<Event, Void> actionsCol = new TableColumn<>("Actions");
+        actionsCol.setPrefWidth(150);
+        actionsCol.setCellFactory(col -> new TableCell<>() {
+            private final Button editBtn = new Button("Edit");
+            private final Button deleteBtn = new Button("Delete");
+            private final HBox actionBox = new HBox(5);
+
+            {
+                editBtn.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 12px; " +
+                               "-fx-padding: 5 10; -fx-cursor: hand;");
+                FontAwesomeIconView editIcon = new FontAwesomeIconView(FontAwesomeIcon.EDIT);
+                editIcon.setSize("12");
+                editIcon.setFill(javafx.scene.paint.Color.WHITE);
+                editBtn.setGraphic(editIcon);
+
+                deleteBtn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 12px; " +
+                                 "-fx-padding: 5 10; -fx-cursor: hand;");
+                FontAwesomeIconView deleteIcon = new FontAwesomeIconView(FontAwesomeIcon.TRASH);
+                deleteIcon.setSize("12");
+                deleteIcon.setFill(javafx.scene.paint.Color.WHITE);
+                deleteBtn.setGraphic(deleteIcon);
+
+                actionBox.getChildren().addAll(editBtn, deleteBtn);
+                actionBox.setAlignment(Pos.CENTER);
+
+                editBtn.setOnAction(e -> {
+                    Event event = getTableView().getItems().get(getIndex());
+                    showEditEventDialog(event);
+                });
+
+                deleteBtn.setOnAction(e -> {
+                    Event event = getTableView().getItems().get(getIndex());
+                    showDeleteConfirmation(event);
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(actionBox);
+                }
+            }
+        });
+
+        eventsTable.getColumns().addAll(idCol, nameCol, typeCol, dateCol, timeCol, statusCol, seatsCol, actionsCol);
+
+        // Load initial data
+        loadEventsData(eventsTable);
+
+        // Event handlers for filters
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null || newVal.trim().isEmpty()) {
+                loadEventsData(eventsTable);
+            } else {
+                filterEvents(eventsTable, newVal, typeFilter.getValue(), statusFilter.getValue());
+            }
+        });
+
+        typeFilter.setOnAction(e -> 
+            filterEvents(eventsTable, searchField.getText(), typeFilter.getValue(), statusFilter.getValue()));
+
+        statusFilter.setOnAction(e -> 
+            filterEvents(eventsTable, searchField.getText(), typeFilter.getValue(), statusFilter.getValue()));
+
+        refreshBtn.setOnAction(e -> {
+            searchField.clear();
+            typeFilter.setValue("All Types");
+            statusFilter.setValue("All Status");
+            loadEventsData(eventsTable);
+        });
+
+        VBox.setVgrow(eventsTable, Priority.ALWAYS);
+        page.getChildren().addAll(titleBar, filterBar, eventsTable);
+        
+        // Wrap in ScrollPane for scrollability
+        ScrollPane scrollPane = new ScrollPane(page);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setStyle("-fx-background: #f5f5f5; -fx-background-color: #f5f5f5;");
+        
+        contentArea.getChildren().clear();
+        contentArea.getChildren().add(scrollPane);
+    }
+
+    private void loadEventsData(TableView<Event> table) {
+        org.openjfx.service.EventService eventService = new org.openjfx.service.EventService();
+        table.getItems().setAll(eventService.getAllEvents());
+    }
+
+    private void filterEvents(TableView<Event> table, String searchTerm, 
+                              String type, String status) {
+        org.openjfx.service.EventService eventService = new org.openjfx.service.EventService();
+        java.util.List<Event> events;
+
+        // Start with all events or search results
+        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+            events = eventService.searchEvents(searchTerm);
+        } else {
+            events = eventService.getAllEvents();
+        }
+
+        // Apply type filter
+        if (type != null && !type.equals("All Types")) {
+            events = events.stream()
+                .filter(e -> e.getEventType().equals(type))
+                .collect(java.util.stream.Collectors.toList());
+        }
+
+        // Apply status filter
+        if (status != null && !status.equals("All Status")) {
+            events = events.stream()
+                .filter(e -> e.getStatus().equals(status))
+                .collect(java.util.stream.Collectors.toList());
+        }
+
+        table.getItems().setAll(events);
+    }
+
+    private void showCreateEventDialog() {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(stage);
+        dialog.setTitle("Create New Event");
+        dialog.setResizable(false);
+
+        VBox content = createEventForm(null, dialog);
+        
+        // Wrap content in ScrollPane
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background: white; -fx-background-color: white;");
+        
+        Scene scene = new Scene(scrollPane, 550, 650);
+        dialog.setScene(scene);
+        
+        // Request focus on the first field after dialog is shown
+        dialog.setOnShown(e -> {
+            content.getChildren().stream()
+                .filter(node -> node instanceof TextField)
+                .findFirst()
+                .ifPresent(node -> ((TextField) node).requestFocus());
+        });
+        
+        dialog.showAndWait();
+    }
+
+    private void showEditEventDialog(Event event) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(stage);
+        dialog.setTitle("Edit Event");
+        dialog.setResizable(false);
+
+        VBox content = createEventForm(event, dialog);
+        
+        // Wrap content in ScrollPane
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background: white; -fx-background-color: white;");
+        
+        Scene scene = new Scene(scrollPane, 550, 650);
+        dialog.setScene(scene);
+        
+        // Request focus on the first field after dialog is shown
+        dialog.setOnShown(e -> {
+            content.getChildren().stream()
+                .filter(node -> node instanceof TextField)
+                .findFirst()
+                .ifPresent(node -> ((TextField) node).requestFocus());
+        });
+        
+        dialog.showAndWait();
+    }
+
+    private VBox createEventForm(Event existingEvent, Stage dialog) {
+        VBox form = new VBox(15);
+        form.setPadding(new Insets(20));
+        form.setStyle("-fx-background-color: white;");
+
+        Label titleLabel = new Label(existingEvent == null ? "Create New Event" : "Edit Event");
+        titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+
+        // Event Name
+        Label nameLabel = new Label("Event Name *");
+        TextField nameField = new TextField();
+        nameField.setPromptText("Enter event name");
+        if (existingEvent != null) nameField.setText(existingEvent.getEventName());
+
+        // Event Type
+        Label typeLabel = new Label("Event Type *");
+        ComboBox<String> typeCombo = new ComboBox<>();
+        typeCombo.getItems().addAll("Football Match", "Concert", "Basketball", "Conference", "Other");
+        if (existingEvent != null) {
+            typeCombo.setValue(existingEvent.getEventType());
+        } else {
+            typeCombo.setValue("Football Match");
+        }
+        typeCombo.setPrefWidth(Double.MAX_VALUE);
+
+        // Event Date
+        Label dateLabel = new Label("Event Date *");
+        DatePicker datePicker = new DatePicker();
+        if (existingEvent != null) {
+            datePicker.setValue(existingEvent.getEventDate());
+        } else {
+            datePicker.setValue(java.time.LocalDate.now());
+        }
+
+        // Event Time
+        Label timeLabel = new Label("Event Time *");
+        TextField timeField = new TextField();
+        timeField.setPromptText("HH:mm (e.g., 19:00)");
+        if (existingEvent != null) timeField.setText(existingEvent.getEventTime().toString());
+
+        // Total Seats
+        Label seatsLabel = new Label("Total Seats *");
+        TextField seatsField = new TextField();
+        seatsField.setPromptText("Enter total seats");
+        if (existingEvent != null) seatsField.setText(String.valueOf(existingEvent.getTotalSeats()));
+
+        // Status
+        Label statusLabel = new Label("Status *");
+        ComboBox<String> statusCombo = new ComboBox<>();
+        statusCombo.getItems().addAll("UPCOMING", "ONGOING", "COMPLETED", "CANCELLED");
+        if (existingEvent != null) {
+            statusCombo.setValue(existingEvent.getStatus());
+        } else {
+            statusCombo.setValue("UPCOMING");
+        }
+        statusCombo.setPrefWidth(Double.MAX_VALUE);
+
+        // Description
+        Label descLabel = new Label("Description");
+        TextArea descArea = new TextArea();
+        descArea.setPromptText("Enter event description");
+        descArea.setPrefRowCount(4);
+        if (existingEvent != null) descArea.setText(existingEvent.getDescription());
+
+        // Error label
+        Label errorLabel = new Label();
+        errorLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+
+        // Buttons
+        HBox buttonBox = new HBox(10);
+        buttonBox.setAlignment(Pos.CENTER_RIGHT);
+
+        Button cancelBtn = new Button("Cancel");
+        cancelBtn.setStyle("-fx-font-size: 14px; -fx-padding: 8 20; -fx-cursor: hand;");
+        cancelBtn.setOnAction(e -> dialog.close());
+
+        Button saveBtn = new Button(existingEvent == null ? "Create" : "Update");
+        saveBtn.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-size: 14px; " +
+                        "-fx-padding: 8 20; -fx-cursor: hand;");
+        saveBtn.setOnAction(e -> {
+            if (validateEventForm(nameField, timeField, seatsField, errorLabel)) {
+                saveEvent(existingEvent, nameField.getText(), typeCombo.getValue(),
+                         datePicker.getValue(), timeField.getText(), seatsField.getText(),
+                         statusCombo.getValue(), descArea.getText(), dialog);
+            }
+        });
+
+        buttonBox.getChildren().addAll(cancelBtn, saveBtn);
+
+        form.getChildren().addAll(titleLabel, nameLabel, nameField, typeLabel, typeCombo,
+                                  dateLabel, datePicker, timeLabel, timeField,
+                                  seatsLabel, seatsField, statusLabel, statusCombo,
+                                  descLabel, descArea, errorLabel, buttonBox);
+
+        return form;
+    }
+
+    private boolean validateEventForm(TextField nameField, TextField timeField, 
+                                     TextField seatsField, Label errorLabel) {
+        if (nameField.getText().trim().isEmpty()) {
+            errorLabel.setText("Event name is required");
+            return false;
+        }
+
+        if (timeField.getText().trim().isEmpty()) {
+            errorLabel.setText("Event time is required");
+            return false;
+        }
+
+        // Validate time format
+        try {
+            java.time.LocalTime.parse(timeField.getText().trim());
+        } catch (Exception e) {
+            errorLabel.setText("Invalid time format. Use HH:mm (e.g., 19:00)");
+            return false;
+        }
+
+        if (seatsField.getText().trim().isEmpty()) {
+            errorLabel.setText("Total seats is required");
+            return false;
+        }
+
+        try {
+            int seats = Integer.parseInt(seatsField.getText().trim());
+            if (seats <= 0) {
+                errorLabel.setText("Total seats must be greater than 0");
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            errorLabel.setText("Invalid number for total seats");
+            return false;
+        }
+
+        return true;
+    }
+
+    private void saveEvent(Event existingEvent, String name, String type,
+                          java.time.LocalDate date, String timeStr, String seatsStr,
+                          String status, String description, Stage dialog) {
+        org.openjfx.service.EventService eventService = new org.openjfx.service.EventService();
+        
+        java.time.LocalTime time = java.time.LocalTime.parse(timeStr.trim());
+        int totalSeats = Integer.parseInt(seatsStr.trim());
+
+        boolean success;
+        if (existingEvent == null) {
+            // Create new event
+            Event newEvent = new Event(
+                name, type, date, time, description, totalSeats
+            );
+            newEvent.setStatus(status);
+            success = eventService.createEvent(newEvent);
+        } else {
+            // Update existing event
+            existingEvent.setEventName(name);
+            existingEvent.setEventType(type);
+            existingEvent.setEventDate(date);
+            existingEvent.setEventTime(time);
+            existingEvent.setTotalSeats(totalSeats);
+            existingEvent.setStatus(status);
+            existingEvent.setDescription(description);
+            success = eventService.updateEvent(existingEvent);
+        }
+
+        if (success) {
+            dialog.close();
+            // Refresh the events page
+            showEventsPage();
+        }
+    }
+
+    private void showDeleteConfirmation(Event event) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(stage);
+        dialog.setTitle("Confirm Delete");
+        dialog.setResizable(false);
+
+        VBox content = new VBox(20);
+        content.setPadding(new Insets(20));
+        content.setAlignment(Pos.CENTER);
+        content.setStyle("-fx-background-color: white;");
+
+        FontAwesomeIconView warningIcon = new FontAwesomeIconView(FontAwesomeIcon.EXCLAMATION_TRIANGLE);
+        warningIcon.setSize("48");
+        warningIcon.setFill(javafx.scene.paint.Color.web("#e74c3c"));
+
+        Label message = new Label("Are you sure you want to delete this event?");
+        message.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+
+        Label eventInfo = new Label(event.getEventName() + " - " + event.getEventDate());
+        eventInfo.setStyle("-fx-font-size: 14px; -fx-text-fill: #7f8c8d;");
+
+        org.openjfx.service.EventService eventService = new org.openjfx.service.EventService();
+        Label warningMsg = new Label();
+        if (eventService.hasBookings(event.getId())) {
+            warningMsg.setText("Warning: This event has existing bookings!");
+            warningMsg.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+        }
+
+        HBox buttonBox = new HBox(10);
+        buttonBox.setAlignment(Pos.CENTER);
+
+        Button cancelBtn = new Button("Cancel");
+        cancelBtn.setStyle("-fx-font-size: 14px; -fx-padding: 8 20; -fx-cursor: hand;");
+        cancelBtn.setOnAction(e -> dialog.close());
+
+        Button deleteBtn = new Button("Delete");
+        deleteBtn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 14px; " +
+                          "-fx-padding: 8 20; -fx-cursor: hand;");
+        deleteBtn.setOnAction(e -> {
+            if (eventService.deleteEvent(event.getId())) {
+                dialog.close();
+                showEventsPage();
+            } else {
+                warningMsg.setText("Cannot delete event with existing bookings!");
+                warningMsg.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+            }
+        });
+
+        buttonBox.getChildren().addAll(cancelBtn, deleteBtn);
+
+        content.getChildren().addAll(warningIcon, message, eventInfo, warningMsg, buttonBox);
+
+        Scene scene = new Scene(content, 400, 250);
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+    
+    /**
+     * Show seats page (placeholder)
+     */
+    private void showSeatsPage() {
+        VBox seatsPage = new VBox(20);
+        seatsPage.setPadding(new Insets(40));
+        seatsPage.setAlignment(Pos.TOP_CENTER);
+        
+        HBox titleBox = new HBox(15);
+        titleBox.setAlignment(Pos.CENTER);
+        
+        FontAwesomeIconView icon = new FontAwesomeIconView(FontAwesomeIcon.TH);
+        icon.setSize("28");
+        icon.setStyle("-fx-fill: #2c3e50;");
+        
+        Label titleLabel = new Label("Seats Management");
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));
+        titleLabel.setStyle("-fx-text-fill: #2c3e50;");
+        
+        titleBox.getChildren().addAll(icon, titleLabel);
+        
+        Label infoLabel = new Label("Seats management page will be implemented here.\nYou'll be able to configure stadium sections, rows, and individual seats.");
+        infoLabel.setFont(Font.font("Arial", 14));
+        infoLabel.setStyle("-fx-text-fill: #7f8c8d;");
+        infoLabel.setWrapText(true);
+        infoLabel.setMaxWidth(600);
+        
+        seatsPage.getChildren().addAll(titleBox, infoLabel);
+        
+        // Wrap in ScrollPane for scrollability
+        ScrollPane scrollPane = new ScrollPane(seatsPage);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setStyle("-fx-background: #ecf0f1; -fx-background-color: #ecf0f1;");
+        
+        contentArea.getChildren().clear();
+        contentArea.getChildren().add(scrollPane);
+    }
+    
+    /**
+     * Show bookings page (placeholder)
+     */
+    private void showBookingsPage() {
+        VBox bookingsPage = new VBox(20);
+        bookingsPage.setPadding(new Insets(40));
+        bookingsPage.setAlignment(Pos.TOP_CENTER);
+        
+        HBox titleBox = new HBox(15);
+        titleBox.setAlignment(Pos.CENTER);
+        
+        FontAwesomeIconView icon = new FontAwesomeIconView(FontAwesomeIcon.TICKET);
+        icon.setSize("28");
+        icon.setStyle("-fx-fill: #2c3e50;");
+        
+        Label titleLabel = new Label("Bookings Management");
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));
+        titleLabel.setStyle("-fx-text-fill: #2c3e50;");
+        
+        titleBox.getChildren().addAll(icon, titleLabel);
+        
+        Label infoLabel = new Label("Bookings management page will be implemented here.\nCashiers can select seats for customers and process bookings.");
+        infoLabel.setFont(Font.font("Arial", 14));
+        infoLabel.setStyle("-fx-text-fill: #7f8c8d;");
+        infoLabel.setWrapText(true);
+        infoLabel.setMaxWidth(600);
+        
+        bookingsPage.getChildren().addAll(titleBox, infoLabel);
+        
+        // Wrap in ScrollPane for scrollability
+        ScrollPane scrollPane = new ScrollPane(bookingsPage);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setStyle("-fx-background: #ecf0f1; -fx-background-color: #ecf0f1;");
+        
+        contentArea.getChildren().clear();
+        contentArea.getChildren().add(scrollPane);
+    }
+    
+    /**
+     * Show reports page (placeholder)
+     */
+    private void showReportsPage() {
+        VBox reportsPage = new VBox(20);
+        reportsPage.setPadding(new Insets(40));
+        reportsPage.setAlignment(Pos.TOP_CENTER);
+        
+        HBox titleBox = new HBox(15);
+        titleBox.setAlignment(Pos.CENTER);
+        
+        FontAwesomeIconView icon = new FontAwesomeIconView(FontAwesomeIcon.BAR_CHART);
+        icon.setSize("28");
+        icon.setStyle("-fx-fill: #2c3e50;");
+        
+        Label titleLabel = new Label("Reports & Analytics");
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));
+        titleLabel.setStyle("-fx-text-fill: #2c3e50;");
+        
+        titleBox.getChildren().addAll(icon, titleLabel);
+        
+        Label infoLabel = new Label("Reports and analytics page will be implemented here.\nView sales reports, event statistics, and revenue analytics.");
+        infoLabel.setFont(Font.font("Arial", 14));
+        infoLabel.setStyle("-fx-text-fill: #7f8c8d;");
+        infoLabel.setWrapText(true);
+        infoLabel.setMaxWidth(600);
+        
+        reportsPage.getChildren().addAll(titleBox, infoLabel);
+        
+        // Wrap in ScrollPane for scrollability
+        ScrollPane scrollPane = new ScrollPane(reportsPage);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setStyle("-fx-background: #ecf0f1; -fx-background-color: #ecf0f1;");
+        
+        contentArea.getChildren().clear();
+        contentArea.getChildren().add(scrollPane);
+    }
+    
+    /**
+     * Handle logout
+     */
+    private void handleLogout() {
+        LoginController loginController = new LoginController(stage);
+        stage.setScene(loginController.getScene());
+        stage.setTitle("Stadium Management System - Login");
+    }
+}
