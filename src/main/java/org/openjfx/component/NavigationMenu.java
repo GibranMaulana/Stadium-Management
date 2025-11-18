@@ -22,9 +22,6 @@ public class NavigationMenu extends VBox {
     private Button eventsButton;
     private Button seatsButton;
     private Button bookingsButton;
-    private Button adminButton;      // NEW: Admin Management
-    private Button staffButton;      // NEW: Staff Management
-    private Button inventoryButton;  // NEW: Inventory Management
     private Button reportsButton;
     
     public NavigationMenu(Admin admin) {
@@ -93,27 +90,13 @@ public class NavigationMenu extends VBox {
         eventsButton = createMenuButton("Events", FontAwesomeIcon.CALENDAR, false);
         seatsButton = createMenuButton("Stadium Config", FontAwesomeIcon.BUILDING, false);
         bookingsButton = createMenuButton("Bookings", FontAwesomeIcon.TICKET, false);
-        
-        // NEW: Management buttons (initially hidden)
-        adminButton = createMenuButton("Admin Management", FontAwesomeIcon.USER_MD, false);
-        staffButton = createMenuButton("Staff Management", FontAwesomeIcon.USERS, false);
-        inventoryButton = createMenuButton("Inventory", FontAwesomeIcon.CUBES, false);
         reportsButton = createMenuButton("Reports", FontAwesomeIcon.BAR_CHART, false);
-        
-        // Hide management buttons by default
-        adminButton.setVisible(false);
-        adminButton.setManaged(false);
-        staffButton.setVisible(false);
-        staffButton.setManaged(false);
         
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
         
-        menuBox.getChildren().addAll(
-            homeButton, eventsButton, seatsButton, bookingsButton,
-            adminButton, staffButton, inventoryButton, reportsButton,
-            spacer
-        );
+        menuBox.getChildren().addAll(homeButton, eventsButton, seatsButton, 
+                                     bookingsButton, reportsButton, spacer);
         VBox.setVgrow(menuBox, Priority.ALWAYS);
         
         return menuBox;
@@ -170,8 +153,7 @@ public class NavigationMenu extends VBox {
     }
     
     public void highlightButton(Button active) {
-        Button[] allButtons = {homeButton, eventsButton, seatsButton, bookingsButton, 
-                              adminButton, staffButton, inventoryButton, reportsButton};
+        Button[] allButtons = {homeButton, eventsButton, seatsButton, bookingsButton, reportsButton};
         
         for (Button button : allButtons) {
             if (button == active) {
@@ -197,43 +179,11 @@ public class NavigationMenu extends VBox {
         }
     }
     
-    /**
-     * Setup role-based access control for menu buttons
-     * @param role User role (ADMIN or SUPER_ADMIN)
-     */
-    public void setupRoles(String role) {
-        // All users can access these features
-        inventoryButton.setVisible(true);
-        inventoryButton.setManaged(true);
-        reportsButton.setVisible(true);
-        reportsButton.setManaged(true);
-        
-        // Only SUPER_ADMIN can access admin and staff management
-        if ("SUPER_ADMIN".equals(role)) {
-            adminButton.setVisible(true);
-            adminButton.setManaged(true);
-            staffButton.setVisible(true);
-            staffButton.setManaged(true);
-            
-            System.out.println("✓ SUPER_ADMIN privileges granted");
-        } else {
-            adminButton.setVisible(false);
-            adminButton.setManaged(false);
-            staffButton.setVisible(false);
-            staffButton.setManaged(false);
-            
-            System.out.println("✓ ADMIN privileges granted");
-        }
-    }
-    
     // Getters for buttons
     public Button getHomeButton() { return homeButton; }
     public Button getEventsButton() { return eventsButton; }
     public Button getSeatsButton() { return seatsButton; }
     public Button getBookingsButton() { return bookingsButton; }
-    public Button getAdminButton() { return adminButton; }        // NEW
-    public Button getStaffButton() { return staffButton; }        // NEW
-    public Button getInventoryButton() { return inventoryButton; } // NEW
     public Button getReportsButton() { return reportsButton; }
     public Button getLogoutButton() { 
         return (Button) getChildren().get(getChildren().size() - 1); 
