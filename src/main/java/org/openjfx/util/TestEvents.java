@@ -67,7 +67,7 @@ public class TestEvents {
         System.out.println("------------------------");
         Event newEvent = new Event(
             "Tennis Championship",
-            "Concert",  // Database only accepts 'Football' or 'Concert'
+            "Tennis",
             LocalDate.of(2025, 12, 1),
             LocalTime.of(14, 0),
             "International tennis championship finals",
@@ -99,8 +99,7 @@ public class TestEvents {
             // Test 7: Update event
             System.out.println("Test 7: Update Event");
             System.out.println("--------------------");
-            // Database constraint requires: 'Active', 'Cancelled', 'Completed'
-            retrieved.setStatus("Completed");
+            retrieved.setStatus("ONGOING");
             retrieved.setDescription("Live now! International tennis championship finals");
             boolean updated = eventService.updateEvent(retrieved);
             if (updated) {

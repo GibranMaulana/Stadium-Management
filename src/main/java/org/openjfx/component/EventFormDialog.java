@@ -97,12 +97,11 @@ public class EventFormDialog {
         // Status
         Label statusLabel = new Label("Status *");
         statusCombo = new ComboBox<>();
-        // Database constraint requires: 'Active', 'Cancelled', 'Completed'
-        statusCombo.getItems().addAll("Active", "Cancelled", "Completed");
+        statusCombo.getItems().addAll("UPCOMING", "ONGOING", "COMPLETED", "CANCELLED");
         if (existingEvent != null) {
             statusCombo.setValue(existingEvent.getStatus());
         } else {
-            statusCombo.setValue("Active");
+            statusCombo.setValue("UPCOMING");
         }
         statusCombo.setPrefWidth(Double.MAX_VALUE);
 
@@ -195,13 +194,9 @@ public class EventFormDialog {
         if (existingEvent == null) {
             // Creating new event - run in background thread
             System.out.println("DEBUG: Creating new event in background thread");
-            
-            // Map combo box value to database event type
-            String eventType = typeCombo.getValue().toUpperCase().contains("FOOTBALL") ? "Football" : "Concert";
-            
             Event newEvent = new Event(
                 nameField.getText(),
-                eventType,
+                typeCombo.getValue(),
                 datePicker.getValue(),
                 time,
                 descArea.getText(),
@@ -226,6 +221,7 @@ public class EventFormDialog {
                         dialog.close();
                         
                         // Automatically open section configuration dialog
+                        String eventType = typeCombo.getValue().toUpperCase().contains("FOOTBALL") ? "FOOTBALL" : "CONCERT";
                         System.out.println("DEBUG: Opening EventSectionConfigDialog for event ID: " + newEvent.getId());
                         
                         EventSectionConfigDialog configDialog = new EventSectionConfigDialog(
@@ -262,12 +258,8 @@ public class EventFormDialog {
             
         } else {
             // Updating existing event - also run in background
-            
-            // Map combo box value to database event type
-            String eventType = typeCombo.getValue().toUpperCase().contains("FOOTBALL") ? "Football" : "Concert";
-            
             existingEvent.setEventName(nameField.getText());
-            existingEvent.setEventType(eventType);
+            existingEvent.setEventType(typeCombo.getValue());
             existingEvent.setEventDate(datePicker.getValue());
             existingEvent.setEventTime(time);
             existingEvent.setTotalSeats(totalSeats);

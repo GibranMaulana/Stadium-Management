@@ -61,11 +61,6 @@ public class DashboardController {
         showHomePage();
         
         Scene scene = new Scene(mainLayout, 1200, 800);
-        
-        // Configure stage for better cross-platform compatibility (especially Windows)
-        stage.setResizable(true);
-        stage.setMinWidth(800);
-        stage.setMinHeight(600);
         stage.setMaximized(true);
         
         return scene;
