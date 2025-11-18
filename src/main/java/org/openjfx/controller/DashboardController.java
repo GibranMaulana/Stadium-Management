@@ -207,7 +207,11 @@ public class DashboardController {
         
         FontAwesomeIconView bookIcon = new FontAwesomeIconView(FontAwesomeIcon.TICKET);
         bookIcon.setSize("16");
-        bookIcon.setFill(javafx.scene.paint.Color.WHITE);
+        bookIcon.setGlyphStyle(
+            "-fx-fill: white;" +
+            "-fx-font-family: FontAwesome;" +
+            "-fx-font-size: 16px;"
+        );
         bookButton.setGraphic(bookIcon);
         
         bookButton.setOnAction(e -> openBookingWizard());
@@ -252,7 +256,11 @@ public class DashboardController {
         
         FontAwesomeIconView createIcon = new FontAwesomeIconView(FontAwesomeIcon.PLUS);
         createIcon.setSize("16");
-        createIcon.setFill(javafx.scene.paint.Color.WHITE);
+        createIcon.setGlyphStyle(
+            "-fx-fill: white;" +
+            "-fx-font-family: FontAwesome;" +
+            "-fx-font-size: 16px;"
+        );
         createEventButton.setGraphic(createIcon);
         
         createEventButton.setOnAction(e -> showCreateEventDialog());
@@ -335,7 +343,11 @@ public class DashboardController {
                           "-fx-padding: 10 20; -fx-cursor: hand;");
         FontAwesomeIconView createIcon = new FontAwesomeIconView(FontAwesomeIcon.PLUS);
         createIcon.setSize("16");
-        createIcon.setFill(javafx.scene.paint.Color.WHITE);
+        createIcon.setGlyphStyle(
+            "-fx-fill: white;" +
+            "-fx-font-family: FontAwesome;" +
+            "-fx-font-size: 16px;"
+        );
         createBtn.setGraphic(createIcon);
         createBtn.setOnAction(e -> showCreateEventDialog());
 
@@ -478,7 +490,11 @@ public class DashboardController {
         
         FontAwesomeIconView icon = new FontAwesomeIconView(FontAwesomeIcon.BAR_CHART);
         icon.setSize("28");
-        icon.setStyle("-fx-fill: #2c3e50;");
+        icon.setGlyphStyle(
+            "-fx-fill: #2c3e50;" +
+            "-fx-font-family: FontAwesome;" +
+            "-fx-font-size: 28px;"
+        );
         
         Label titleLabel = new Label("Reports & Analytics");
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));

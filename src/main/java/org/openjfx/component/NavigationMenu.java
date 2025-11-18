@@ -66,7 +66,11 @@ public class NavigationMenu extends VBox {
         
         FontAwesomeIconView userIcon = new FontAwesomeIconView(FontAwesomeIcon.USER);
         userIcon.setSize("14");
-        userIcon.setFill(javafx.scene.paint.Color.WHITE);
+        userIcon.setGlyphStyle(
+            "-fx-fill: white;" +
+            "-fx-font-family: FontAwesome;" +
+            "-fx-font-size: 14px;"
+        );
         
         Label userLabel = new Label(admin.getUsername());
         userLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 13));
@@ -137,7 +141,11 @@ public class NavigationMenu extends VBox {
         
         FontAwesomeIconView iconView = new FontAwesomeIconView(icon);
         iconView.setSize("16");
-        iconView.setStyle("-fx-fill: white;");
+        iconView.setGlyphStyle(
+            "-fx-fill: white;" +
+            "-fx-font-family: FontAwesome;" +
+            "-fx-font-size: 16px;"
+        );
         
         Label textLabel = new Label(text);
         textLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13px;");

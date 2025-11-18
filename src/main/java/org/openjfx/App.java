@@ -14,19 +14,20 @@ public class App extends Application {
     @Override
     public void start(Stage stage) {
         // Set up the primary stage
-        try {
-         // This specific path points to the .ttf file inside the 'fontawesomefx-fontawesome' jar
-         javafx.scene.text.Font.loadFont(
-               de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView.class
-                  .getResourceAsStream("/de/jensd/fx/glyphs/fontawesome/fontawesome-webfont.ttf"), 
-               10
+javafx.scene.text.Font font = javafx.scene.text.Font.loadFont(
+            de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView.class
+            .getResourceAsStream("/de/jensd/fx/glyphs/fontawesome/fontawesome-webfont.ttf"), 
+            10
          );
 
-         System.out.println("success loading font");
-      } catch (Exception e) {
-         System.out.println("WARNING: Could not load FontAwesome font!");
-         e.printStackTrace();
-      }
+         // 2. Check if it is NULL
+         if (font == null) {
+            System.out.println("❌ FAILED: loadFont returned NULL. The path is wrong or module is blocked.");
+         } else {
+            System.out.println("✅ SUCCESS: Loaded font: " + font.getFamily());
+            // 3. Print all families to verify it is registered
+            System.out.println("Registered Families: " + javafx.scene.text.Font.getFamilies());
+         }
         stage.setTitle("Stadium Management System - Login");
         stage.setResizable(false);
         

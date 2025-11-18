@@ -71,7 +71,11 @@ public class AdminManagementView extends VBox {
         
         FontAwesomeIconView icon = new FontAwesomeIconView(FontAwesomeIcon.USER_SECRET);
         icon.setSize("32");
-        icon.setStyle("-fx-fill: #2c3e50;");
+        icon.setGlyphStyle(
+            "-fx-fill: #2c3e50;" +
+            "-fx-font-family: FontAwesome;" +
+            "-fx-font-size: 32px;"
+        );
         
         Label titleLabel = new Label("Admin Management");
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));
@@ -121,7 +125,11 @@ public class AdminManagementView extends VBox {
         
         FontAwesomeIconView icon = new FontAwesomeIconView(iconType);
         icon.setSize("20");
-        icon.setStyle("-fx-fill: " + color + ";");
+        icon.setGlyphStyle(
+            "-fx-fill: " + color + ";" +
+            "-fx-font-family: FontAwesome;" +
+            "-fx-font-size: 20px;"
+        );
         
         Label titleLabel = new Label(title);
         titleLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 13));
@@ -147,16 +155,24 @@ public class AdminManagementView extends VBox {
         Button addButton = new Button("Add New Admin");
         FontAwesomeIconView addIcon = new FontAwesomeIconView(FontAwesomeIcon.PLUS);
         addIcon.setSize("14");
-        addIcon.setStyle("-fx-fill: white;");
+        addIcon.setGlyphStyle(
+            "-fx-fill: white;" +
+            "-fx-font-family: FontAwesome;" +
+            "-fx-font-size: 14px;"
+        );
         addButton.setGraphic(addIcon);
-        addButton.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; " +
-                          "-fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 5; -fx-cursor: hand;");
+        addButton.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; " +
+                          "-fx-padding: 10 20; -fx-cursor: hand; -fx-font-size: 13px;");
         addButton.setOnAction(e -> showAddAdminDialog());
         
         Button refreshButton = new Button("Refresh");
         FontAwesomeIconView refreshIcon = new FontAwesomeIconView(FontAwesomeIcon.REFRESH);
         refreshIcon.setSize("14");
-        refreshIcon.setStyle("-fx-fill: white;");
+        refreshIcon.setGlyphStyle(
+            "-fx-fill: #7f8c8d;" +
+            "-fx-font-family: FontAwesome;" +
+            "-fx-font-size: 14px;"
+        );
         refreshButton.setGraphic(refreshIcon);
         refreshButton.setStyle("-fx-background-color: #95a5a6; -fx-text-fill: white; " +
                               "-fx-padding: 10 20; -fx-background-radius: 5; -fx-cursor: hand;");
@@ -215,14 +231,26 @@ public class AdminManagementView extends VBox {
                     HBox box = new HBox(8);
                     box.setAlignment(Pos.CENTER_LEFT);
                     
-                    FontAwesomeIconView userIcon = new FontAwesomeIconView(FontAwesomeIcon.USER_CIRCLE);
-                    userIcon.setSize("16");
-                    userIcon.setStyle("-fx-fill: #3498db;");
+                    try {
+                        FontAwesomeIconView userIcon = new FontAwesomeIconView(FontAwesomeIcon.USER_CIRCLE);
+                        userIcon.setSize("16");
+                        userIcon.setGlyphStyle(
+                            "-fx-fill: #3498db;" +
+                            "-fx-font-family: FontAwesome;" +
+                            "-fx-font-size: 16px;"
+                        );
+                        
+                        Label nameLabel = new Label(username);
+                        nameLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 12));
+                        
+                        box.getChildren().addAll(userIcon, nameLabel);
+                    } catch (Exception e) {
+                        // Fallback jika icon gagal
+                        Label nameLabel = new Label(username);
+                        nameLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 12));
+                        box.getChildren().add(nameLabel);
+                    }
                     
-                    Label nameLabel = new Label(username);
-                    nameLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 12));
-                    
-                    box.getChildren().addAll(userIcon, nameLabel);
                     setGraphic(box);
                 }
             }
@@ -254,7 +282,11 @@ public class AdminManagementView extends VBox {
                         box.setAlignment(Pos.CENTER_LEFT);
                         FontAwesomeIconView starIcon = new FontAwesomeIconView(FontAwesomeIcon.STAR);
                         starIcon.setSize("12");
-                        starIcon.setStyle("-fx-fill: white;");
+                        starIcon.setGlyphStyle(
+                            "-fx-fill: white;" +
+                            "-fx-font-family: FontAwesome;" +
+                            "-fx-font-size: 12px;"
+                        );
                         badge.setGraphic(starIcon);
                         
                         setGraphic(badge);
@@ -301,14 +333,22 @@ public class AdminManagementView extends VBox {
             {
                 FontAwesomeIconView editIcon = new FontAwesomeIconView(FontAwesomeIcon.EDIT);
                 editIcon.setSize("12");
-                editIcon.setStyle("-fx-fill: white;");
+                editIcon.setGlyphStyle(
+                    "-fx-fill: white;" +
+                    "-fx-font-family: FontAwesome;" +
+                    "-fx-font-size: 12px;"
+                );
                 editButton.setGraphic(editIcon);
                 editButton.setStyle("-fx-background-color: #f39c12; -fx-text-fill: white; " +
                                    "-fx-font-size: 11px; -fx-padding: 6 12; -fx-background-radius: 4; -fx-cursor: hand;");
                 
                 FontAwesomeIconView deleteIcon = new FontAwesomeIconView(FontAwesomeIcon.TRASH);
                 deleteIcon.setSize("12");
-                deleteIcon.setStyle("-fx-fill: white;");
+                deleteIcon.setGlyphStyle(
+                    "-fx-fill: white;" +
+                    "-fx-font-family: FontAwesome;" +
+                    "-fx-font-size: 12px;"
+                );
                 deleteButton.setGraphic(deleteIcon);
                 deleteButton.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; " +
                                      "-fx-font-size: 11px; -fx-padding: 6 12; -fx-background-radius: 4; -fx-cursor: hand;");
