@@ -71,7 +71,7 @@ public class AdminManagementView extends VBox {
         
         FontAwesomeIconView icon = new FontAwesomeIconView(FontAwesomeIcon.USER_SECRET);
         icon.setSize("32");
-        icon.setStyle("-fx-fill: #2c3e50;");
+        icon.setGlyphStyle("-fx-fill: #2c3e50;");
         
         Label titleLabel = new Label("Admin Management");
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));
@@ -121,7 +121,7 @@ public class AdminManagementView extends VBox {
         
         FontAwesomeIconView icon = new FontAwesomeIconView(iconType);
         icon.setSize("20");
-        icon.setStyle("-fx-fill: " + color + ";");
+        icon.setGlyphStyle("-fx-fill: " + color + ";");
         
         Label titleLabel = new Label(title);
         titleLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 13));
@@ -147,7 +147,7 @@ public class AdminManagementView extends VBox {
         Button addButton = new Button("Add New Admin");
         FontAwesomeIconView addIcon = new FontAwesomeIconView(FontAwesomeIcon.PLUS);
         addIcon.setSize("14");
-        addIcon.setStyle("-fx-fill: white;");
+        addIcon.setGlyphStyle("-fx-fill: white;");
         addButton.setGraphic(addIcon);
         addButton.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; " +
                           "-fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 5; -fx-cursor: hand;");
@@ -156,7 +156,7 @@ public class AdminManagementView extends VBox {
         Button refreshButton = new Button("Refresh");
         FontAwesomeIconView refreshIcon = new FontAwesomeIconView(FontAwesomeIcon.REFRESH);
         refreshIcon.setSize("14");
-        refreshIcon.setStyle("-fx-fill: white;");
+        refreshIcon.setGlyphStyle("-fx-fill: white;");
         refreshButton.setGraphic(refreshIcon);
         refreshButton.setStyle("-fx-background-color: #95a5a6; -fx-text-fill: white; " +
                               "-fx-padding: 10 20; -fx-background-radius: 5; -fx-cursor: hand;");
@@ -217,7 +217,8 @@ public class AdminManagementView extends VBox {
                     
                     FontAwesomeIconView userIcon = new FontAwesomeIconView(FontAwesomeIcon.USER_CIRCLE);
                     userIcon.setSize("16");
-                    userIcon.setStyle("-fx-fill: #3498db;");
+                    userIcon.setGlyphStyle("-fx-fill: #3498db;");
+                    
                     
                     Label nameLabel = new Label(username);
                     nameLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 12));
@@ -254,7 +255,7 @@ public class AdminManagementView extends VBox {
                         box.setAlignment(Pos.CENTER_LEFT);
                         FontAwesomeIconView starIcon = new FontAwesomeIconView(FontAwesomeIcon.STAR);
                         starIcon.setSize("12");
-                        starIcon.setStyle("-fx-fill: white;");
+                        starIcon.setGlyphStyle("-fx-fill: white;");
                         badge.setGraphic(starIcon);
                         
                         setGraphic(badge);
@@ -301,14 +302,14 @@ public class AdminManagementView extends VBox {
             {
                 FontAwesomeIconView editIcon = new FontAwesomeIconView(FontAwesomeIcon.EDIT);
                 editIcon.setSize("12");
-                editIcon.setStyle("-fx-fill: white;");
+                editIcon.setGlyphStyle("-fx-fill: white;");
                 editButton.setGraphic(editIcon);
                 editButton.setStyle("-fx-background-color: #f39c12; -fx-text-fill: white; " +
                                    "-fx-font-size: 11px; -fx-padding: 6 12; -fx-background-radius: 4; -fx-cursor: hand;");
                 
                 FontAwesomeIconView deleteIcon = new FontAwesomeIconView(FontAwesomeIcon.TRASH);
                 deleteIcon.setSize("12");
-                deleteIcon.setStyle("-fx-fill: white;");
+                deleteIcon.setGlyphStyle("-fx-fill: white;");
                 deleteButton.setGraphic(deleteIcon);
                 deleteButton.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; " +
                                      "-fx-font-size: 11px; -fx-padding: 6 12; -fx-background-radius: 4; -fx-cursor: hand;");

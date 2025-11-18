@@ -89,7 +89,8 @@ public class StatCard extends VBox {
         
         iconView = new FontAwesomeIconView(icon);
         iconView.setSize("24");
-        iconView.setStyle("-fx-fill: " + accentColor + ";");
+      //   iconView.setFill(javafx.scene.paint.Color.WHITE);
+        iconView.setGlyphStyle("-fx-fill: " + accentColor + ";");
         
         iconContainer.getChildren().add(iconView);
         

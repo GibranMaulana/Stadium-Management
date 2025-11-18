@@ -137,7 +137,8 @@ public class NavigationMenu extends VBox {
         
         FontAwesomeIconView iconView = new FontAwesomeIconView(icon);
         iconView.setSize("16");
-        iconView.setStyle("-fx-fill: white;");
+        iconView.setFill(javafx.scene.paint.Color.WHITE);
+      //   iconView.setStyle("-fx-fill: white;");
         
         Label textLabel = new Label(text);
         textLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13px;");

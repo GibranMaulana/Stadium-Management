@@ -78,7 +78,7 @@ public class StaffManagementView extends VBox {
         
         FontAwesomeIconView icon = new FontAwesomeIconView(FontAwesomeIcon.USERS);
         icon.setSize("32");
-        icon.setStyle("-fx-fill: #2c3e50;");
+        icon.setGlyphStyle("-fx-fill: #2c3e50;");
         
         Label titleLabel = new Label("Staff Management");
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));
@@ -128,7 +128,7 @@ public class StaffManagementView extends VBox {
         
         FontAwesomeIconView icon = new FontAwesomeIconView(iconType);
         icon.setSize("20");
-        icon.setStyle("-fx-fill: " + color + ";");
+        icon.setGlyphStyle("-fx-fill: " + color + ";");
         
         Label titleLabel = new Label(title);
         titleLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 12));
@@ -155,7 +155,7 @@ public class StaffManagementView extends VBox {
         Button addButton = new Button("Add New Staff");
         FontAwesomeIconView addIcon = new FontAwesomeIconView(FontAwesomeIcon.PLUS);
         addIcon.setSize("14");
-        addIcon.setStyle("-fx-fill: white;");
+        addIcon.setGlyphStyle("-fx-fill: white;");
         addButton.setGraphic(addIcon);
         addButton.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; " +
                           "-fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 5; -fx-cursor: hand;");
@@ -164,7 +164,7 @@ public class StaffManagementView extends VBox {
         Button refreshButton = new Button("Refresh");
         FontAwesomeIconView refreshIcon = new FontAwesomeIconView(FontAwesomeIcon.REFRESH);
         refreshIcon.setSize("14");
-        refreshIcon.setStyle("-fx-fill: white;");
+        refreshIcon.setGlyphStyle("-fx-fill: white;");
         refreshButton.setGraphic(refreshIcon);
         refreshButton.setStyle("-fx-background-color: #95a5a6; -fx-text-fill: white; " +
                               "-fx-padding: 10 20; -fx-background-radius: 5; -fx-cursor: hand;");
@@ -231,7 +231,7 @@ public class StaffManagementView extends VBox {
                     
                     FontAwesomeIconView userIcon = new FontAwesomeIconView(FontAwesomeIcon.USER_CIRCLE_ALT);
                     userIcon.setSize("16");
-                    userIcon.setStyle("-fx-fill: #3498db;");
+                    userIcon.setGlyphStyle("-fx-fill: #3498db;");
                     
                     Label nameLabel = new Label(name);
                     nameLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 12));
@@ -351,7 +351,7 @@ public class StaffManagementView extends VBox {
                 // View Button
                 FontAwesomeIconView viewIcon = new FontAwesomeIconView(FontAwesomeIcon.EYE);
                 viewIcon.setSize("12");
-                viewIcon.setStyle("-fx-fill: white;");
+                viewIcon.setGlyphStyle("-fx-fill: white;");
                 viewButton.setGraphic(viewIcon);
                 viewButton.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; " +
                                    "-fx-font-size: 10px; -fx-padding: 5 10; -fx-background-radius: 4; -fx-cursor: hand;");
@@ -359,7 +359,7 @@ public class StaffManagementView extends VBox {
                 // Edit Button
                 FontAwesomeIconView editIcon = new FontAwesomeIconView(FontAwesomeIcon.EDIT);
                 editIcon.setSize("12");
-                editIcon.setStyle("-fx-fill: white;");
+                editIcon.setGlyphStyle("-fx-fill: white;");
                 editButton.setGraphic(editIcon);
                 editButton.setStyle("-fx-background-color: #f39c12; -fx-text-fill: white; " +
                                    "-fx-font-size: 10px; -fx-padding: 5 10; -fx-background-radius: 4; -fx-cursor: hand;");
@@ -394,7 +394,7 @@ public class StaffManagementView extends VBox {
                         toggleButton.setText("Deactivate");
                         FontAwesomeIconView icon = new FontAwesomeIconView(FontAwesomeIcon.BAN);
                         icon.setSize("12");
-                        icon.setStyle("-fx-fill: white;");
+                        icon.setGlyphStyle("-fx-fill: white;");
                         toggleButton.setGraphic(icon);
                         toggleButton.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; " +
                                             "-fx-font-size: 10px; -fx-padding: 5 10; -fx-background-radius: 4; -fx-cursor: hand;");
@@ -402,7 +402,7 @@ public class StaffManagementView extends VBox {
                         toggleButton.setText("Activate");
                         FontAwesomeIconView icon = new FontAwesomeIconView(FontAwesomeIcon.CHECK);
                         icon.setSize("12");
-                        icon.setStyle("-fx-fill: white;");
+                        icon.setGlyphStyle("-fx-fill: white;");
                         toggleButton.setGraphic(icon);
                         toggleButton.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; " +
                                             "-fx-font-size: 10px; -fx-padding: 5 10; -fx-background-radius: 4; -fx-cursor: hand;");
