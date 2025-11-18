@@ -45,6 +45,10 @@ public class DashboardController {
         
         // Create navigation menu (left sidebar)
         navigationMenu = new NavigationMenu(admin);
+        
+        // NEW: Setup role-based access control
+        navigationMenu.setupRoles(admin.getRole());
+        
         setupNavigationHandlers();
         mainLayout.setLeft(navigationMenu);
         
@@ -89,6 +93,24 @@ public class DashboardController {
         navigationMenu.getBookingsButton().setOnAction(e -> {
             navigationMenu.highlightButton(navigationMenu.getBookingsButton());
             showBookingsPage();
+        });
+        
+        // NEW: Admin Management (SUPER_ADMIN only)
+        navigationMenu.getAdminButton().setOnAction(e -> {
+            navigationMenu.highlightButton(navigationMenu.getAdminButton());
+            showAdminManagementPage();
+        });
+        
+        // NEW: Staff Management (SUPER_ADMIN only)
+        navigationMenu.getStaffButton().setOnAction(e -> {
+            navigationMenu.highlightButton(navigationMenu.getStaffButton());
+            showStaffManagementPage();
+        });
+        
+        // NEW: Inventory Management
+        navigationMenu.getInventoryButton().setOnAction(e -> {
+            navigationMenu.highlightButton(navigationMenu.getInventoryButton());
+            showInventoryPage();
         });
         
         navigationMenu.getReportsButton().setOnAction(e -> {
@@ -474,6 +496,54 @@ public class DashboardController {
         
         // Wrap in ScrollPane
         ScrollPane scrollPane = new ScrollPane(reportsPage);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setStyle("-fx-background: #ecf0f1; -fx-background-color: #ecf0f1;");
+        
+        contentArea.getChildren().clear();
+        contentArea.getChildren().add(scrollPane);
+    }
+    
+    /**
+     * Show Admin Management page (SUPER_ADMIN only)
+     */
+    private void showAdminManagementPage() {
+        // Create the AdminManagementView component
+        AdminManagementView adminView = new AdminManagementView(admin);
+        
+        ScrollPane scrollPane = new ScrollPane(adminView);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setStyle("-fx-background: #ecf0f1; -fx-background-color: #ecf0f1;");
+        
+        contentArea.getChildren().clear();
+        contentArea.getChildren().add(scrollPane);
+    }
+    
+    /**
+     * Show Staff Management page (SUPER_ADMIN only)
+     */
+    private void showStaffManagementPage() {
+        // Create the StaffManagementView component
+        StaffManagementView staffView = new StaffManagementView();
+        
+        ScrollPane scrollPane = new ScrollPane(staffView);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setStyle("-fx-background: #ecf0f1; -fx-background-color: #ecf0f1;");
+        
+        contentArea.getChildren().clear();
+        contentArea.getChildren().add(scrollPane);
+    }
+    
+    /**
+     * Show Inventory Management page
+     */
+    private void showInventoryPage() {
+        // Create the InventoryView component
+        InventoryView inventoryView = new InventoryView();
+        
+        ScrollPane scrollPane = new ScrollPane(inventoryView);
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);
         scrollPane.setStyle("-fx-background: #ecf0f1; -fx-background-color: #ecf0f1;");
