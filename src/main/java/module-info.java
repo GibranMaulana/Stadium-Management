@@ -10,4 +10,5 @@ module org.openjfx {
     exports org.openjfx.model;
     exports org.openjfx.service;
     exports org.openjfx.util;
+    opens org.openjfx to de.jensd.fx.fontawesomefx.commons;
 }
