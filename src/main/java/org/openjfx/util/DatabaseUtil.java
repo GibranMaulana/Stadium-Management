@@ -87,10 +87,34 @@ public class DatabaseUtil {
     private static final String DB_ENCRYPT = getEnv("DB_ENCRYPT", "false");
     
     // Build connection URL from environment variables
-    private static final String DB_URL = String.format(
-        "jdbc:sqlserver://%s:%s;databaseName=%s;encrypt=%s;trustServerCertificate=true",
-        DB_HOST, DB_PORT, DB_NAME, DB_ENCRYPT
-    );
+    private static final String DB_URL = buildConnectionUrl();
+    
+    /**
+     * Build connection URL based on whether using named instance or default instance
+     * Named instances (e.g., localhost\\SQLEXPRESS) don't use port numbers
+     * Default instances use host:port format
+     */
+    private static String buildConnectionUrl() {
+        // If host contains instance name (backslash), don't add port
+        if (DB_HOST.contains("\\")) {
+            return String.format(
+                "jdbc:sqlserver://%s;databaseName=%s;encrypt=%s;trustServerCertificate=true",
+                DB_HOST, DB_NAME, DB_ENCRYPT
+            );
+        } else if (DB_PORT != null && !DB_PORT.trim().isEmpty()) {
+            // Default instance with port
+            return String.format(
+                "jdbc:sqlserver://%s:%s;databaseName=%s;encrypt=%s;trustServerCertificate=true",
+                DB_HOST, DB_PORT, DB_NAME, DB_ENCRYPT
+            );
+        } else {
+            // Default instance without port
+            return String.format(
+                "jdbc:sqlserver://%s;databaseName=%s;encrypt=%s;trustServerCertificate=true",
+                DB_HOST, DB_NAME, DB_ENCRYPT
+            );
+        }
+    }
     
     /**
      * Get a NEW database connection each time
