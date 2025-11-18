@@ -103,7 +103,7 @@ public class EventCard extends HBox {
       // Icon
       iconView = new FontAwesomeIconView(icon);
       iconView.setSize("32");
-      iconView.setStyle("-fx-fill: " + getIconColor(status) + ";");
+      iconView.setGlyphStyle("-fx-fill: " + getIconColor(status) + ";");
       
       // Left side content
       VBox left = createLeftSide(title, eventType, description);
@@ -174,7 +174,7 @@ public class EventCard extends HBox {
       
       FontAwesomeIconView seatIcon = new FontAwesomeIconView(FontAwesomeIcon.USERS);
       seatIcon.setSize("14");
-      seatIcon.setStyle("-fx-fill: #7f8c8d;");
+      seatIcon.setGlyphStyle("-fx-fill: #7f8c8d;");
       
       seatLabel = new Label(String.valueOf(occupiedSeats) + " seats");
       seatLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
