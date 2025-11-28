@@ -21,10 +21,31 @@ public class ReportService {
     
     private final InventoryService inventoryService;
     private final InventoryPurchaseService purchaseService;
+    private final EventExpenseService eventExpenseService;
     
     public ReportService() {
         this.inventoryService = new InventoryService();
         this.purchaseService = new InventoryPurchaseService();
+        this.eventExpenseService = new EventExpenseService();
+    }
+
+    // Simple refresh listener support so UI components can refresh when underlying data changes
+    private static final java.util.List<Runnable> refreshListeners = new java.util.ArrayList<>();
+
+    public static void addRefreshListener(Runnable r) {
+        synchronized (refreshListeners) { refreshListeners.add(r); }
+    }
+
+    public static void removeRefreshListener(Runnable r) {
+        synchronized (refreshListeners) { refreshListeners.remove(r); }
+    }
+
+    public static void notifyRefreshListeners() {
+        java.util.List<Runnable> copy;
+        synchronized (refreshListeners) { copy = new java.util.ArrayList<>(refreshListeners); }
+        for (Runnable r : copy) {
+            try { r.run(); } catch (Exception ignored) {}
+        }
     }
 
     /**
@@ -73,7 +94,9 @@ public class ReportService {
      * Total expenses (purchases) in a period
      */
     public double getTotalExpenses(LocalDate start, LocalDate end) {
-        return purchaseService.getTotalExpensesInPeriod(start, end);
+        double purchases = purchaseService.getTotalExpensesInPeriod(start, end);
+        double eventExpenses = eventExpenseService.getTotalExpensesInPeriod(start, end);
+        return purchases + eventExpenses;
     }
 
     /**
@@ -90,7 +113,9 @@ public class ReportService {
      */
     public double getProfitForEvent(int eventId) {
         double revenue = getRevenueForEvent(eventId);
-        double expenses = purchaseService.getTotalExpensesForEvent(eventId);
+        double purchases = purchaseService.getTotalExpensesForEvent(eventId);
+        double eventExpenses = eventExpenseService.getTotalExpensesForEvent(eventId);
+        double expenses = purchases + eventExpenses;
         return revenue - expenses;
     }
     
