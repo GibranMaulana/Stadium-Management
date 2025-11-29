@@ -1,11 +1,13 @@
 package org.openjfx.component;
 
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -14,31 +16,27 @@ import javafx.scene.text.FontWeight;
 /**
  * Container view for Reports with three styled sub-buttons: Financial, Event, Stadium
  */
-public class ReportsMainView extends BorderPane {
+public class ReportsMainView extends VBox {
 
-    private final Button btnFinancial = new Button("Financial");
-    private final Button btnEvent = new Button("Event");
-    private final Button btnStadium = new Button("Stadium");
+    private final Button btnFinancial = new Button("Financial Report");
+    private final Button btnEvent = new Button("Event Report");
+    private final Button btnStadium = new Button("Stadium Report");
 
     private final StackPane contentPane = new StackPane();
+    private Button activeButton = null;
 
     public ReportsMainView() {
-        setPadding(new Insets(16));
+        setSpacing(0);
+        setPadding(new Insets(30));
+        setStyle("-fx-background-color: #ecf0f1;");
 
-        // Title + description
-        Label title = new Label("Reports");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 22));
+        // Header with icon
+        VBox header = createHeader();
 
-        Label desc = new Label("Provides strategic analysis through Financial Reports, Event Performance summaries, and an Overall Stadium Operations");
-        desc.setWrapText(true);
-        desc.setStyle("-fx-text-fill: #7f8c8d;");
-
-        VBox header = new VBox(6, title, desc);
-        header.setPadding(new Insets(0,0,12,0));
-
-        // Button bar (styled like menu buttons)
-        HBox buttonBar = new HBox(8);
+        // Button bar
+        HBox buttonBar = new HBox(15);
         buttonBar.setAlignment(Pos.CENTER_LEFT);
+        buttonBar.setPadding(new Insets(15, 0, 15, 0));
 
         styleMenuButton(btnFinancial);
         styleMenuButton(btnEvent);
@@ -49,6 +47,10 @@ public class ReportsMainView extends BorderPane {
         btnStadium.setOnAction(e -> showStadium());
 
         buttonBar.getChildren().addAll(btnFinancial, btnEvent, btnStadium);
+
+        // Content area
+        contentPane.setPadding(new Insets(20, 0, 0, 0));
+        VBox.setVgrow(contentPane, Priority.ALWAYS);
 
         // Initialize content views
         FinancialReportView financialView = new FinancialReportView();
@@ -63,41 +65,96 @@ public class ReportsMainView extends BorderPane {
             contentPane.getChildren().get(i).setManaged(false);
         }
 
-        // Default view: Event
-        showEvent();
+        // Default view: Financial
+        showFinancial();
 
-        VBox container = new VBox(10, header, buttonBar, contentPane);
-        container.setPadding(new Insets(8));
+        getChildren().addAll(header, buttonBar, contentPane);
+    }
 
-        setCenter(container);
+    private VBox createHeader() {
+        VBox headerBox = new VBox(10);
+        headerBox.setPadding(new Insets(0, 0, 20, 0));
+        
+        HBox titleBox = new HBox(15);
+        titleBox.setAlignment(Pos.CENTER_LEFT);
+        
+        FontAwesomeIconView icon = new FontAwesomeIconView(FontAwesomeIcon.BAR_CHART);
+        icon.setSize("32");
+        icon.setFill(javafx.scene.paint.Color.web("#2c3e50"));
+        
+        VBox textBox = new VBox(5);
+        Label titleLabel = new Label("Reports & Analytics");
+        titleLabel.setFont(Font.font("System", FontWeight.BOLD, 28));
+        titleLabel.setStyle("-fx-text-fill: #2c3e50;");
+        
+        Label subtitleLabel = new Label("View financial and operational reports");
+        subtitleLabel.setFont(Font.font("System", 14));
+        subtitleLabel.setStyle("-fx-text-fill: #7f8c8d;");
+        
+        textBox.getChildren().addAll(titleLabel, subtitleLabel);
+        titleBox.getChildren().addAll(icon, textBox);
+        
+        headerBox.getChildren().add(titleBox);
+        return headerBox;
     }
 
     private void styleMenuButton(Button b) {
         // apply inactive style by default
         applyInactiveStyle(b);
-        b.setOnMouseEntered(e -> applyHoverStyle(b));
+        b.setOnMouseEntered(e -> {
+            if (!isActiveButton(b)) {
+                applyHoverStyle(b);
+            }
+        });
         b.setOnMouseExited(e -> {
             // if this button is active, keep active style; otherwise inactive
-            if (isActiveButton(b)) applyActiveStyle(b); else applyInactiveStyle(b);
+            if (isActiveButton(b)) {
+                applyActiveStyle(b);
+            } else {
+                applyInactiveStyle(b);
+            }
         });
     }
 
     private void applyActiveStyle(Button b) {
-        b.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 13px; " +
-                   "-fx-padding: 8 16; -fx-background-radius: 6; -fx-cursor: hand;");
+        b.setStyle(
+            "-fx-background-color: #3498db; " +
+            "-fx-text-fill: white; " +
+            "-fx-font-size: 14px; " +
+            "-fx-font-weight: bold; " +
+            "-fx-padding: 10 20; " +
+            "-fx-background-radius: 5; " +
+            "-fx-cursor: hand;"
+        );
     }
 
     private void applyInactiveStyle(Button b) {
-        b.setStyle("-fx-background-color: transparent; -fx-text-fill: #2c3e50; -fx-font-size: 13px; " +
-                   "-fx-padding: 8 16; -fx-background-radius: 6; -fx-cursor: hand;");
+        b.setStyle(
+            "-fx-background-color: white; " +
+            "-fx-text-fill: #2c3e50; " +
+            "-fx-font-size: 14px; " +
+            "-fx-padding: 10 20; " +
+            "-fx-background-radius: 5; " +
+            "-fx-border-color: #bdc3c7; " +
+            "-fx-border-width: 1; " +
+            "-fx-border-radius: 5; " +
+            "-fx-cursor: hand;"
+        );
     }
 
     private void applyHoverStyle(Button b) {
-        b.setStyle("-fx-background-color: #ecf3ff; -fx-text-fill: #2c3e50; -fx-font-size: 13px; " +
-                   "-fx-padding: 8 16; -fx-background-radius: 6; -fx-cursor: hand;");
+        b.setStyle(
+            "-fx-background-color: #ecf0f1; " +
+            "-fx-text-fill: #2c3e50; " +
+            "-fx-font-size: 14px; " +
+            "-fx-padding: 10 20; " +
+            "-fx-background-radius: 5; " +
+            "-fx-border-color: #3498db; " +
+            "-fx-border-width: 1; " +
+            "-fx-border-radius: 5; " +
+            "-fx-cursor: hand;"
+        );
     }
-
-    private Button activeButton = null;
 
     private boolean isActiveButton(Button b) {
         return activeButton == b;

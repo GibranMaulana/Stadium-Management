@@ -481,33 +481,10 @@ public class DashboardController {
      * Show reports page (placeholder)
      */
     private void showReportsPage() {
-        VBox reportsPage = new VBox(20);
-        reportsPage.setPadding(new Insets(40));
-        reportsPage.setAlignment(Pos.TOP_CENTER);
-        
-        HBox titleBox = new HBox(15);
-        titleBox.setAlignment(Pos.CENTER);
-        
-        FontAwesomeIconView icon = new FontAwesomeIconView(FontAwesomeIcon.BAR_CHART);
-        icon.setSize("28");
-        icon.setStyle("-fx-fill: #2c3e50;");
-        
-        Label titleLabel = new Label("Reports & Analytics");
-        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));
-        titleLabel.setStyle("-fx-text-fill: #2c3e50;");
-        
-        titleBox.getChildren().addAll(icon, titleLabel);
-        
-        Label infoLabel = new Label("Reports and analytics page will be implemented here.\nView sales reports, event statistics, and revenue analytics.");
-        infoLabel.setFont(Font.font("Arial", 14));
-        infoLabel.setStyle("-fx-text-fill: #7f8c8d;");
-        infoLabel.setWrapText(true);
-        infoLabel.setMaxWidth(600);
-        
-        reportsPage.getChildren().addAll(titleBox, infoLabel);
-        
-        // Wrap in ScrollPane
-        ScrollPane scrollPane = new ScrollPane(reportsPage);
+        // Show main reports container (tabs for Financial, Event, Stadium)
+        ReportsMainView reportView = new ReportsMainView();
+
+        ScrollPane scrollPane = new ScrollPane(reportView);
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);
         scrollPane.setStyle("-fx-background: #ecf0f1; -fx-background-color: #ecf0f1;");
