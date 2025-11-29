@@ -1,7 +1,10 @@
 package org.openjfx.component;
 
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
@@ -11,6 +14,11 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.effect.DropShadow;
+import javafx.application.Platform;
 import org.openjfx.model.Event;
 import org.openjfx.service.EventService;
 import org.openjfx.service.ReportService;
@@ -21,7 +29,7 @@ import java.util.List;
 /**
  * Financial report UI: shows revenue/expenses/profit for a date range and per-event summary
  */
-public class FinancialReportView extends BorderPane {
+public class FinancialReportView extends VBox {
 
     private final ReportService reportService = new ReportService();
 
@@ -43,13 +51,43 @@ public class FinancialReportView extends BorderPane {
     private boolean showAll = false;
 
     public FinancialReportView() {
-        setPadding(new Insets(12));
+        setSpacing(20);
+        setPadding(new Insets(0));
+        
+        // Set default date range (last month to today)
+        startDate.setValue(LocalDate.now().minusMonths(1));
+        endDate.setValue(LocalDate.now());
+        
+        // Summary cards at top
+        HBox summaryCards = createSummaryCards();
+        
+        // Controls card
+        VBox controlsCard = new VBox(15);
+        controlsCard.setStyle(
+            "-fx-background-color: white; " +
+            "-fx-background-radius: 10; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);"
+        );
+        controlsCard.setPadding(new Insets(20));
 
-        HBox controls = new HBox(8);
-        controls.setPadding(new Insets(8));
-        controls.getChildren().addAll(new Label("From:"), startDate, new Label("To:"), endDate);
+        HBox controls = new HBox(12);
+        controls.setAlignment(Pos.CENTER_LEFT);
+        controls.getChildren().addAll(
+            new Label("Period:"), 
+            startDate, 
+            new Label("to"), 
+            endDate
+        );
 
-        Button apply = new Button("Apply");
+        Button apply = new Button("Apply Filter");
+        apply.setStyle(
+            "-fx-background-color: #3498db; " +
+            "-fx-text-fill: white; " +
+            "-fx-font-size: 13px; " +
+            "-fx-padding: 8 16; " +
+            "-fx-background-radius: 5; " +
+            "-fx-cursor: hand;"
+        );
         apply.setOnAction(e -> refresh());
         controls.getChildren().add(apply);
 
@@ -61,42 +99,90 @@ public class FinancialReportView extends BorderPane {
             int maxPage = Math.max(0, (allEvents == null ? 0 : (allEvents.size()-1)/pageSize));
             if (page < maxPage) page++; updateChart();
         });
-        btnShowAll.setOnAction(e -> { showAll = !showAll; btnShowAll.setText(showAll? "Show Latest 5" : "Show All"); updateChart(); });
-        controls.getChildren().addAll(btnPrev, pageLabel, btnNext, btnShowAll);
-
-        VBox top = new VBox(6, controls);
-
-        GridPane summary = new GridPane();
-        summary.setHgap(12);
-        summary.setVgap(8);
-        summary.add(new Label("Revenue (Rp):"), 0, 0);
-        summary.add(lblRevenue, 1, 0);
-        summary.add(new Label("Expenses (Rp):"), 0, 1);
-        summary.add(lblExpenses, 1, 1);
-        summary.add(new Label("Profit (Rp):"), 0, 2);
-        summary.add(lblProfit, 1, 2);
-
+        btnShowAll.setOnAction(e -> { 
+            showAll = !showAll; 
+            btnShowAll.setText(showAll? "Show Latest 5" : "Show All"); 
+            updateChart(); 
+        });
+        
+        HBox pagination = new HBox(8);
+        pagination.setAlignment(Pos.CENTER_LEFT);
+        pagination.getChildren().addAll(btnPrev, pageLabel, btnNext, btnShowAll);
+        
+        controlsCard.getChildren().addAll(controls, pagination);
 
         // Bar chart setup
         CategoryAxis xAxis = new CategoryAxis();
         NumberAxis yAxis = new NumberAxis();
-        yAxis.setLabel("Profit %");
+        yAxis.setLabel("Profit (Rp)");
         profitBarChart = new BarChart<>(xAxis, yAxis);
-        profitBarChart.setTitle("Profit Percentage per Event");
+        profitBarChart.setTitle("Profit per Event");
         profitBarChart.setLegendVisible(false);
         profitBarChart.setAnimated(false);
-        profitBarChart.setPrefHeight(320);
+        profitBarChart.setPrefHeight(400);
+        
+        VBox chartCard = new VBox(profitBarChart);
+        chartCard.setStyle(
+            "-fx-background-color: white; " +
+            "-fx-background-radius: 10; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);"
+        );
+        chartCard.setPadding(new Insets(20));
+        VBox.setVgrow(chartCard, Priority.ALWAYS);
 
-        setTop(top);
-
-        HBox centerBox = new HBox(12);
-        centerBox.setPadding(new Insets(8));
-        HBox.setHgrow(profitBarChart, javafx.scene.layout.Priority.ALWAYS);
-        profitBarChart.setMaxWidth(Double.MAX_VALUE);
-        centerBox.getChildren().addAll(profitBarChart, summary);
-        setCenter(centerBox);
+        getChildren().addAll(summaryCards, controlsCard, chartCard);
 
         refresh();
+        // register for data-change notifications so charts refresh when expenses are added
+        ReportService.addRefreshListener(() -> Platform.runLater(this::refresh));
+    }
+    
+    private HBox createSummaryCards() {
+        HBox container = new HBox(15);
+        container.setAlignment(Pos.CENTER_LEFT);
+        
+        VBox revenueCard = createStatCard("Revenue", lblRevenue, FontAwesomeIcon.MONEY, "#27ae60");
+        VBox expensesCard = createStatCard("Expenses", lblExpenses, FontAwesomeIcon.SHOPPING_CART, "#e74c3c");
+        VBox profitCard = createStatCard("Profit", lblProfit, FontAwesomeIcon.LINE_CHART, "#3498db");
+        
+        HBox.setHgrow(revenueCard, Priority.ALWAYS);
+        HBox.setHgrow(expensesCard, Priority.ALWAYS);
+        HBox.setHgrow(profitCard, Priority.ALWAYS);
+        
+        container.getChildren().addAll(revenueCard, expensesCard, profitCard);
+        return container;
+    }
+    
+    private VBox createStatCard(String title, Label valueLabel, FontAwesomeIcon icon, String color) {
+        VBox card = new VBox(10);
+        card.setAlignment(Pos.TOP_LEFT);
+        card.setPadding(new Insets(20));
+        card.setStyle(
+            "-fx-background-color: white; " +
+            "-fx-background-radius: 10; " +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);"
+        );
+        
+        HBox header = new HBox(10);
+        header.setAlignment(Pos.CENTER_LEFT);
+        
+        FontAwesomeIconView iconView = new FontAwesomeIconView(icon);
+        iconView.setSize("24");
+        iconView.setFill(javafx.scene.paint.Color.web(color));
+        
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 13px;");
+        
+        header.getChildren().addAll(iconView, titleLabel);
+        
+        valueLabel.setFont(Font.font("System", FontWeight.BOLD, 24));
+        valueLabel.setStyle("-fx-text-fill: #2c3e50;");
+        
+        Label rpLabel = new Label("Rp");
+        rpLabel.setStyle("-fx-text-fill: #95a5a6; -fx-font-size: 12px;");
+        
+        card.getChildren().addAll(header, valueLabel, rpLabel);
+        return card;
     }
 
     private void refresh() {
@@ -116,6 +202,16 @@ public class FinancialReportView extends BorderPane {
             @Override
             protected List<Event> call() throws Exception {
                 List<Event> evs = eventService.getAllEvents();
+                
+                // Filter by event date within period
+                evs.removeIf(ev -> {
+                    LocalDate eventDate = ev.getEventDate();
+                    if (eventDate == null) return true; // exclude if no date
+                    if (eventDate.isBefore(start)) return true;
+                    if (eventDate.isAfter(end)) return true;
+                    return false;
+                });
+                
                 // sort by date descending
                 evs.sort((a,b) -> {
                     if (a.getEventDate() == null && b.getEventDate() == null) return 0;
@@ -149,11 +245,8 @@ public class FinancialReportView extends BorderPane {
                     evs = allEvents.subList(start, end);
                 }
                 for (Event ev : evs) {
-                    double revenue = reportService.getRevenueForEvent(ev.getId());
                     double profit = reportService.getProfitForEvent(ev.getId());
-                    double pct = 0.0;
-                    if (revenue != 0) pct = (profit / revenue) * 100.0;
-                    series.getData().add(new XYChart.Data<>(ev.getEventName(), pct));
+                    series.getData().add(new XYChart.Data<>(ev.getEventName(), profit));
                 }
                 return series;
             }
