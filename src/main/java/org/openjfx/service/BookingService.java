@@ -2,8 +2,10 @@ package org.openjfx.service;
 
 import org.openjfx.model.Booking;
 import org.openjfx.model.BookingSeat;
+import org.openjfx.model.Event;
 import org.openjfx.model.Seat;
 import org.openjfx.util.DatabaseUtil;
+import org.openjfx.util.MailUtils;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -110,6 +112,10 @@ public class BookingService {
             }
             
             conn.commit(); // Commit transaction
+            
+            // Send booking confirmation email asynchronously
+            sendBookingConfirmationEmailAsync(booking);
+            
             return booking;
             
         } catch (SQLException e) {
@@ -294,6 +300,10 @@ public class BookingService {
             }
             
             conn.commit();
+            
+            // Send cancellation email asynchronously
+            sendBookingCancellationEmailAsync(booking);
+            
             return true;
             
         } catch (SQLException e) {
@@ -506,5 +516,67 @@ public class BookingService {
             rs.getString("Status"),
             rs.getTimestamp("CreatedAt")
         );
+    }
+    
+    /**
+     * Send booking confirmation email asynchronously
+     * This runs in a separate thread to avoid blocking the booking process
+     */
+    private void sendBookingConfirmationEmailAsync(Booking booking) {
+        new Thread(() -> {
+            try {
+                // Get event details
+                EventService eventService = new EventService();
+                Event event = eventService.getEventById(booking.getEventId());
+                
+                if (event != null) {
+                    // Load booking seats for the email
+                    booking.setBookingSeats(getBookingSeats(booking.getBookingId()));
+                    
+                    // Send email
+                    boolean sent = MailUtils.sendBookingConfirmation(booking, event);
+                    
+                    if (sent) {
+                        System.out.println("✓ Booking confirmation email sent successfully for booking: " + booking.getBookingNumber());
+                    } else {
+                        System.err.println("✗ Failed to send booking confirmation email for booking: " + booking.getBookingNumber());
+                    }
+                } else {
+                    System.err.println("✗ Event not found for booking: " + booking.getBookingNumber());
+                }
+            } catch (Exception e) {
+                System.err.println("✗ Error sending booking confirmation email: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }).start();
+    }
+    
+    /**
+     * Send booking cancellation email asynchronously
+     */
+    private void sendBookingCancellationEmailAsync(Booking booking) {
+        new Thread(() -> {
+            try {
+                // Get event details
+                EventService eventService = new EventService();
+                Event event = eventService.getEventById(booking.getEventId());
+                
+                if (event != null) {
+                    // Send email
+                    boolean sent = MailUtils.sendBookingCancellation(booking, event);
+                    
+                    if (sent) {
+                        System.out.println("✓ Booking cancellation email sent successfully for booking: " + booking.getBookingNumber());
+                    } else {
+                        System.err.println("✗ Failed to send booking cancellation email for booking: " + booking.getBookingNumber());
+                    }
+                } else {
+                    System.err.println("✗ Event not found for cancellation email: " + booking.getBookingNumber());
+                }
+            } catch (Exception e) {
+                System.err.println("✗ Error sending booking cancellation email: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }).start();
     }
 }

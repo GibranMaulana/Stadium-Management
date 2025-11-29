@@ -5,6 +5,8 @@ module org.openjfx {
     requires java.sql;
     requires de.jensd.fx.glyphs.fontawesome;
     requires de.jensd.fx.glyphs.commons;
+    requires java.mail;
+    requires io.github.cdimascio.dotenv.java;
     exports org.openjfx;
     exports org.openjfx.controller;
     exports org.openjfx.model;
