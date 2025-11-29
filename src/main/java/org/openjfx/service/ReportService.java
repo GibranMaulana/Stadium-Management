@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,9 +20,78 @@ import java.util.Map;
 public class ReportService {
     
     private final InventoryService inventoryService;
+    private final InventoryPurchaseService purchaseService;
     
     public ReportService() {
         this.inventoryService = new InventoryService();
+        this.purchaseService = new InventoryPurchaseService();
+    }
+
+    /**
+     * Get total revenue between two dates (inclusive)
+     */
+    public double getRevenueForPeriod(LocalDate start, LocalDate end) {
+        String query = "SELECT ISNULL(SUM(TotalPrice),0) FROM Bookings WHERE BookingStatus = 'CONFIRMED' " +
+                       "AND CAST(BookingDate AS DATE) BETWEEN ? AND ?";
+        try (java.sql.Connection conn = DatabaseUtil.getConnection();
+             java.sql.PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, start.toString());
+            stmt.setString(2, end.toString());
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getDouble(1);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error getting revenue for period: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return 0.0;
+    }
+
+    /**
+     * Get total revenue for a single event
+     */
+    public double getRevenueForEvent(int eventId) {
+        String query = "SELECT ISNULL(SUM(TotalPrice),0) FROM Bookings WHERE BookingStatus = 'CONFIRMED' AND EventID = ?";
+        try (java.sql.Connection conn = DatabaseUtil.getConnection();
+             java.sql.PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, eventId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getDouble(1);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error getting revenue for event: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return 0.0;
+    }
+
+    /**
+     * Total expenses (purchases) in a period
+     */
+    public double getTotalExpenses(LocalDate start, LocalDate end) {
+        return purchaseService.getTotalExpensesInPeriod(start, end);
+    }
+
+    /**
+     * Profit for a period (revenue - expenses)
+     */
+    public double getProfitForPeriod(LocalDate start, LocalDate end) {
+        double revenue = getRevenueForPeriod(start, end);
+        double expenses = getTotalExpenses(start, end);
+        return revenue - expenses;
+    }
+
+    /**
+     * Profit for an event (event revenue - expenses attributed to event)
+     */
+    public double getProfitForEvent(int eventId) {
+        double revenue = getRevenueForEvent(eventId);
+        double expenses = purchaseService.getTotalExpensesForEvent(eventId);
+        return revenue - expenses;
     }
     
     /**

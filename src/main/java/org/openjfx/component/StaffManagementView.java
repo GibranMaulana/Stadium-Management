@@ -28,7 +28,6 @@ import java.util.Optional;
 public class StaffManagementView extends VBox {
     
     private final StaffService staffService;
-    private TableView<Staff> staffTable;
     private ObservableList<Staff> staffList;
     private final NumberFormat currencyFormat;
     private final DateTimeFormatter dateFormatter;
@@ -37,6 +36,7 @@ public class StaffManagementView extends VBox {
     private Label totalSalaryLabel;
     private Label avgSalaryLabel;
     private CheckBox showInactiveCheck;
+    private ScrollPane cardsScrollPane; // Store reference to update cards
     
     public StaffManagementView() {
         this.staffService = new StaffService();
@@ -51,7 +51,7 @@ public class StaffManagementView extends VBox {
     private void setupUI() {
         setSpacing(20);
         setPadding(new Insets(30));
-        setStyle("-fx-background-color: #ecf0f1;");
+        setStyle("-fx-background-color: linear-gradient(to bottom, #f5f7fa 0%, #c3cfe2 100%);");
         
         // Header
         VBox header = createHeader();
@@ -63,11 +63,11 @@ public class StaffManagementView extends VBox {
         HBox toolbar = createToolbar();
         
         // Table Container
-        VBox tableContainer = createTableContainer();
+        cardsScrollPane = createTableContainer();
         
         // Add all components
-        getChildren().addAll(header, statsCards, toolbar, tableContainer);
-        VBox.setVgrow(tableContainer, Priority.ALWAYS);
+        getChildren().addAll(header, statsCards, toolbar, cardsScrollPane);
+        VBox.setVgrow(cardsScrollPane, Priority.ALWAYS);
     }
     
     private VBox createHeader() {
@@ -188,18 +188,30 @@ public class StaffManagementView extends VBox {
         return toolbar;
     }
     
-    private VBox createTableContainer() {
-        VBox container = new VBox();
-        container.setStyle("-fx-background-color: white; -fx-background-radius: 8; " +
-                          "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 3);");
-        container.setPadding(new Insets(20));
+    private ScrollPane createTableContainer() {
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
         
-        staffTable = createStaffTable();
+        FlowPane cardsGrid = new FlowPane();
+        cardsGrid.setHgap(20);
+        cardsGrid.setVgap(20);
+        cardsGrid.setPadding(new Insets(20));
+        cardsGrid.setStyle("-fx-background-color: transparent;");
         
-        container.getChildren().add(staffTable);
-        VBox.setVgrow(staffTable, Priority.ALWAYS);
+        for (Staff staff : staffList) {
+            StaffCard card = new StaffCard(
+                staff,
+                () -> showViewDialog(staff),
+                () -> showEditDialog(staff),
+                () -> toggleStaffStatus(staff)
+            );
+            cardsGrid.getChildren().add(card);
+        }
         
-        return container;
+        scrollPane.setContent(cardsGrid);
+        return scrollPane;
     }
     
     private TableView<Staff> createStaffTable() {
@@ -432,6 +444,7 @@ public class StaffManagementView extends VBox {
         staffList.addAll(allStaff);
         updateStats();
         updateCountLabel();
+        refreshCardsDisplay(); // Rebuild UI cards after data loaded
     }
     
     private void filterStaff() {
@@ -731,6 +744,156 @@ public class StaffManagementView extends VBox {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(content);
+        alert.showAndWait();
+    }
+    
+    // ==================== CARD-BASED HELPER METHODS ====================
+    
+    private void refreshCardsDisplay() {
+        if (cardsScrollPane != null) {
+            FlowPane cardsGrid = new FlowPane();
+            cardsGrid.setHgap(20);
+            cardsGrid.setVgap(20);
+            cardsGrid.setPadding(new Insets(20));
+            cardsGrid.setStyle("-fx-background-color: transparent;");
+            
+            for (Staff staff : staffList) {
+                StaffCard card = new StaffCard(
+                    staff,
+                    () -> showViewDialog(staff),
+                    () -> showEditDialog(staff),
+                    () -> toggleStaffStatus(staff)
+                );
+                cardsGrid.getChildren().add(card);
+            }
+            
+            cardsScrollPane.setContent(cardsGrid);
+        }
+    }
+    
+    private void showViewDialog(Staff staff) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Staff Details");
+        alert.setHeaderText(staff.getFullName() + " - " + staff.getPosition());
+        
+        String details = String.format(
+            "Staff ID: %d\n" +
+            "Position: %s\n" +
+            "Salary: %s\n" +
+            "Phone: %s\n" +
+            "Hire Date: %s\n" +
+            "Address: %s\n" +
+            "Status: %s",
+            staff.getStaffId(),
+            staff.getPosition(),
+            currencyFormat.format(staff.getSalary()),
+            staff.getPhoneNumber(),
+            staff.getHireDate().format(dateFormatter),
+            staff.getAddress(),
+            staff.isActive() ? "Active" : "Inactive"
+        );
+        
+        alert.setContentText(details);
+        alert.showAndWait();
+    }
+    
+    private void showEditDialog(Staff staff) {
+        Dialog<Staff> dialog = new Dialog<>();
+        dialog.setTitle("Edit Staff");
+        dialog.setHeaderText("Edit: " + staff.getFullName());
+        
+        ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+        
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+        
+        TextField nameField = new TextField(staff.getFullName());
+        TextField positionField = new TextField(staff.getPosition());
+        TextField salaryField = new TextField(String.valueOf(staff.getSalary()));
+        TextField phoneField = new TextField(staff.getPhoneNumber());
+        TextField addressField = new TextField(staff.getAddress());
+        DatePicker hireDatePicker = new DatePicker(staff.getHireDate());
+        
+        grid.add(createLabel("Name:"), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(createLabel("Position:"), 0, 1);
+        grid.add(positionField, 1, 1);
+        grid.add(createLabel("Salary:"), 0, 2);
+        grid.add(salaryField, 1, 2);
+        grid.add(createLabel("Phone:"), 0, 3);
+        grid.add(phoneField, 1, 3);
+        grid.add(createLabel("Hire Date:"), 0, 4);
+        grid.add(hireDatePicker, 1, 4);
+        grid.add(createLabel("Address:"), 0, 5);
+        grid.add(addressField, 1, 5);
+        
+        dialog.getDialogPane().setContent(grid);
+        
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == saveButtonType) {
+                staff.setFullName(nameField.getText());
+                staff.setPosition(positionField.getText());
+                staff.setSalary(Double.parseDouble(salaryField.getText()));
+                staff.setPhoneNumber(phoneField.getText());
+                staff.setHireDate(hireDatePicker.getValue());
+                staff.setAddress(addressField.getText());
+                return staff;
+            }
+            return null;
+        });
+        
+        Optional<Staff> result = dialog.showAndWait();
+        result.ifPresent(updatedStaff -> {
+            if (staffService.updateStaff(updatedStaff)) {
+                showSuccess("Staff updated successfully!");
+                loadStaff();
+            } else {
+                showError("Failed to update staff.");
+            }
+        });
+    }
+    
+    private void toggleStaffStatus(Staff staff) {
+        String action = staff.isActive() ? "deactivate" : "activate";
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirm Status Change");
+        alert.setHeaderText(action.substring(0, 1).toUpperCase() + action.substring(1) + " Staff Member");
+        alert.setContentText("Are you sure you want to " + action + " " + staff.getFullName() + "?");
+        
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            boolean success;
+            if (staff.isActive()) {
+                success = staffService.deactivateStaff(staff.getStaffId());
+            } else {
+                success = staffService.activateStaff(staff.getStaffId());
+            }
+            
+            if (success) {
+                showSuccess("Staff member " + action + "d successfully!");
+                loadStaff();
+            } else {
+                showError("Failed to " + action + " staff member.");
+            }
+        }
+    }
+    
+    private void showSuccess(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Success");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+    
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
         alert.showAndWait();
     }
 }

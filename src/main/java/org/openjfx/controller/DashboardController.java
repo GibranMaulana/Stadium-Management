@@ -490,11 +490,7 @@ public class DashboardController {
         
         FontAwesomeIconView icon = new FontAwesomeIconView(FontAwesomeIcon.BAR_CHART);
         icon.setSize("28");
-        icon.setGlyphStyle(
-            "-fx-fill: #2c3e50;" +
-            "-fx-font-family: FontAwesome;" +
-            "-fx-font-size: 28px;"
-        );
+        icon.setStyle("-fx-fill: #2c3e50;");
         
         Label titleLabel = new Label("Reports & Analytics");
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));
@@ -515,7 +511,7 @@ public class DashboardController {
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);
         scrollPane.setStyle("-fx-background: #ecf0f1; -fx-background-color: #ecf0f1;");
-        
+
         contentArea.getChildren().clear();
         contentArea.getChildren().add(scrollPane);
     }

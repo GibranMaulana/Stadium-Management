@@ -26,14 +26,16 @@ import java.util.Optional;
 public class InventoryView extends VBox {
     
     private final InventoryService inventoryService;
-    private TableView<InventoryItem> inventoryTable;
     private ObservableList<InventoryItem> inventoryList;
     private final NumberFormat currencyFormat;
     
     private Label totalItemsLabel;
     private Label lowStockLabel;
     private Label totalValueLabel;
-    private CheckBox showAllCheck;
+    private CheckBox showLowStockOnly;
+    private ComboBox<String> categoryFilter;
+    private ComboBox<String> stockLevelFilter;
+    private ScrollPane cardsScrollPane; // Store reference to update cards
     
     public InventoryView() {
         this.inventoryService = new InventoryService();
@@ -47,7 +49,7 @@ public class InventoryView extends VBox {
     private void setupUI() {
         setSpacing(20);
         setPadding(new Insets(30));
-        setStyle("-fx-background-color: #ecf0f1;");
+        setStyle("-fx-background-color: linear-gradient(to bottom, #f5f7fa 0%, #c3cfe2 100%);");
         
         // Header
         VBox header = createHeader();
@@ -59,11 +61,11 @@ public class InventoryView extends VBox {
         HBox toolbar = createToolbar();
         
         // Table Container
-        VBox tableContainer = createTableContainer();
+        cardsScrollPane = createTableContainer();
         
         // Add all components
-        getChildren().addAll(header, statsCards, toolbar, tableContainer);
-        VBox.setVgrow(tableContainer, Priority.ALWAYS);
+        getChildren().addAll(header, statsCards, toolbar, cardsScrollPane);
+        VBox.setVgrow(cardsScrollPane, Priority.ALWAYS);
     }
     
     private VBox createHeader() {
@@ -166,11 +168,33 @@ public class InventoryView extends VBox {
                               "-fx-padding: 10 20; -fx-background-radius: 5; -fx-cursor: hand;");
         refreshButton.setOnAction(e -> loadInventory());
         
-        showAllCheck = new CheckBox("Show All Items");
-        showAllCheck.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 12));
-        showAllCheck.setStyle("-fx-text-fill: #34495e;");
-        showAllCheck.setSelected(true);
-        showAllCheck.setOnAction(e -> filterInventory());
+        // Stock Level Filter
+        Label stockFilterLabel = new Label("Stock:");
+        stockFilterLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 12));
+        stockFilterLabel.setStyle("-fx-text-fill: #34495e;");
+        
+        stockLevelFilter = new ComboBox<>();
+        stockLevelFilter.getItems().addAll("All Items", "High Stock", "Medium Stock", "Low Stock", "Out of Stock");
+        stockLevelFilter.setValue("All Items");
+        stockLevelFilter.setStyle("-fx-font-size: 12px; -fx-background-radius: 5;");
+        stockLevelFilter.setOnAction(e -> filterInventory());
+        
+        // Category Filter
+        Label categoryLabel = new Label("Category:");
+        categoryLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 12));
+        categoryLabel.setStyle("-fx-text-fill: #34495e;");
+        
+        categoryFilter = new ComboBox<>();
+        categoryFilter.setValue("All Categories");
+        categoryFilter.setStyle("-fx-font-size: 12px; -fx-background-radius: 5;");
+        categoryFilter.setOnAction(e -> filterInventory());
+        
+        // Low Stock Checkbox
+        showLowStockOnly = new CheckBox("Low Stock Alert");
+        showLowStockOnly.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 12));
+        showLowStockOnly.setStyle("-fx-text-fill: #e74c3c;");
+        showLowStockOnly.setSelected(false);
+        showLowStockOnly.setOnAction(e -> filterInventory());
         
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -181,22 +205,40 @@ public class InventoryView extends VBox {
         countLabel.setStyle("-fx-text-fill: #34495e; -fx-background-color: #ecf0f1; " +
                            "-fx-padding: 8 15; -fx-background-radius: 5;");
         
-        toolbar.getChildren().addAll(addButton, refreshButton, showAllCheck, spacer, countLabel);
+        toolbar.getChildren().addAll(
+            addButton, refreshButton, 
+            new Separator(javafx.geometry.Orientation.VERTICAL),
+            stockFilterLabel, stockLevelFilter,
+            categoryLabel, categoryFilter,
+            showLowStockOnly,
+            spacer, countLabel
+        );
         return toolbar;
     }
     
-    private VBox createTableContainer() {
-        VBox container = new VBox();
-        container.setStyle("-fx-background-color: white; -fx-background-radius: 8; " +
-                          "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 3);");
-        container.setPadding(new Insets(20));
+    private ScrollPane createTableContainer() {
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
         
-        inventoryTable = createInventoryTable();
+        FlowPane cardsGrid = new FlowPane();
+        cardsGrid.setHgap(20);
+        cardsGrid.setVgap(20);
+        cardsGrid.setPadding(new Insets(20));
+        cardsGrid.setStyle("-fx-background-color: transparent;");
         
-        container.getChildren().add(inventoryTable);
-        VBox.setVgrow(inventoryTable, Priority.ALWAYS);
+        for (InventoryItem item : inventoryList) {
+            InventoryCard card = new InventoryCard(
+                item,
+                () -> showEditDialog(item),
+                () -> showDeleteDialog(item)
+            );
+            cardsGrid.getChildren().add(card);
+        }
         
-        return container;
+        scrollPane.setContent(cardsGrid);
+        return scrollPane;
     }
     
     private TableView<InventoryItem> createInventoryTable() {
@@ -418,17 +460,83 @@ public class InventoryView extends VBox {
         List<InventoryItem> allItems = inventoryService.getAllItems();
         inventoryList.clear();
         inventoryList.addAll(allItems);
+        
+        // Populate category filter with unique categories
+        if (categoryFilter != null) {
+            categoryFilter.getItems().clear();
+            categoryFilter.getItems().add("All Categories");
+            allItems.stream()
+                .map(InventoryItem::getCategory)
+                .distinct()
+                .sorted()
+                .forEach(categoryFilter.getItems()::add);
+            if (categoryFilter.getValue() == null) {
+                categoryFilter.setValue("All Categories");
+            }
+        }
+        
         updateStats();
         updateCountLabel();
+        refreshCardsDisplay(); // Rebuild UI cards after data loaded
     }
     
     private void filterInventory() {
-        loadInventory();
-        if (!showAllCheck.isSelected()) {
-            // Show only low stock items
-            inventoryList.removeIf(item -> !item.isLowStock());
+        List<InventoryItem> allItems = inventoryService.getAllItems();
+        inventoryList.clear();
+        
+        // Apply filters
+        for (InventoryItem item : allItems) {
+            boolean matches = true;
+            
+            // Filter by low stock only
+            if (showLowStockOnly != null && showLowStockOnly.isSelected()) {
+                if (!item.isLowStock()) {
+                    matches = false;
+                }
+            }
+            
+            // Filter by category
+            if (categoryFilter != null && categoryFilter.getValue() != null) {
+                String selectedCategory = categoryFilter.getValue();
+                if (!"All Categories".equals(selectedCategory)) {
+                    if (!item.getCategory().equals(selectedCategory)) {
+                        matches = false;
+                    }
+                }
+            }
+            
+            // Filter by stock level
+            if (stockLevelFilter != null && stockLevelFilter.getValue() != null) {
+                String selectedLevel = stockLevelFilter.getValue();
+                if (!"All Items".equals(selectedLevel)) {
+                    int quantity = item.getQuantity();
+                    int minStock = item.getMinStockLevel();
+                    
+                    switch (selectedLevel) {
+                        case "High Stock":
+                            if (quantity < 50) matches = false;
+                            break;
+                        case "Medium Stock":
+                            if (quantity >= 50 || quantity < minStock) matches = false;
+                            break;
+                        case "Low Stock":
+                            if (quantity == 0 || quantity >= minStock) matches = false;
+                            break;
+                        case "Out of Stock":
+                            if (quantity != 0) matches = false;
+                            break;
+                    }
+                }
+            }
+            
+            if (matches) {
+                inventoryList.add(item);
+            }
         }
+        
+        updateStats();
         updateCountLabel();
+        refreshCardsDisplay();
     }
     
     private void updateStats() {
@@ -658,6 +766,121 @@ public class InventoryView extends VBox {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(content);
+        alert.showAndWait();
+    }
+    
+    // ==================== CARD-BASED HELPER METHODS ====================
+    
+    private void refreshCardsDisplay() {
+        if (cardsScrollPane != null) {
+            FlowPane cardsGrid = new FlowPane();
+            cardsGrid.setHgap(20);
+            cardsGrid.setVgap(20);
+            cardsGrid.setPadding(new Insets(20));
+            cardsGrid.setStyle("-fx-background-color: transparent;");
+            
+            for (InventoryItem item : inventoryList) {
+                InventoryCard card = new InventoryCard(
+                    item,
+                    () -> showEditDialog(item),
+                    () -> showDeleteDialog(item)
+                );
+                cardsGrid.getChildren().add(card);
+            }
+            
+            cardsScrollPane.setContent(cardsGrid);
+        }
+    }
+    
+    private void showEditDialog(InventoryItem item) {
+        Dialog<InventoryItem> dialog = new Dialog<>();
+        dialog.setTitle("Edit Item");
+        dialog.setHeaderText("Edit: " + item.getItemName());
+        
+        ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+        
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+        
+        TextField nameField = new TextField(item.getItemName());
+        TextField categoryField = new TextField(item.getCategory());
+        TextField quantityField = new TextField(String.valueOf(item.getQuantity()));
+        TextField minStockField = new TextField(String.valueOf(item.getMinStockLevel()));
+        TextField priceField = new TextField(String.valueOf(item.getUnitPrice()));
+        TextField locationField = new TextField(item.getLocation());
+        
+        grid.add(createLabel("Name:"), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(createLabel("Category:"), 0, 1);
+        grid.add(categoryField, 1, 1);
+        grid.add(createLabel("Quantity:"), 0, 2);
+        grid.add(quantityField, 1, 2);
+        grid.add(createLabel("Min Stock:"), 0, 3);
+        grid.add(minStockField, 1, 3);
+        grid.add(createLabel("Price:"), 0, 4);
+        grid.add(priceField, 1, 4);
+        grid.add(createLabel("Location:"), 0, 5);
+        grid.add(locationField, 1, 5);
+        
+        dialog.getDialogPane().setContent(grid);
+        
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == saveButtonType) {
+                item.setItemName(nameField.getText());
+                item.setCategory(categoryField.getText());
+                item.setQuantity(Integer.parseInt(quantityField.getText()));
+                item.setMinStockLevel(Integer.parseInt(minStockField.getText()));
+                item.setUnitPrice(Double.parseDouble(priceField.getText()));
+                item.setLocation(locationField.getText());
+                return item;
+            }
+            return null;
+        });
+        
+        Optional<InventoryItem> result = dialog.showAndWait();
+        result.ifPresent(updatedItem -> {
+            if (inventoryService.updateItem(updatedItem)) {
+                showSuccess("Item updated successfully!");
+                loadInventory();
+            } else {
+                showError("Failed to update item.");
+            }
+        });
+    }
+    
+    private void showDeleteDialog(InventoryItem item) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirm Delete");
+        alert.setHeaderText("Delete Item: " + item.getItemName());
+        alert.setContentText("Are you sure you want to delete this item? This action cannot be undone.");
+        
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            if (inventoryService.deleteItem(item.getItemId())) {
+                showSuccess("Item deleted successfully!");
+                loadInventory();
+            } else {
+                showError("Failed to delete item.");
+            }
+        }
+    }
+    
+    private void showSuccess(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Success");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+    
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
         alert.showAndWait();
     }
 }

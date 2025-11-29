@@ -25,7 +25,6 @@ import java.util.Optional;
 public class AdminManagementView extends VBox {
     
     private final AdminService adminService;
-    private TableView<Admin> adminTable;
     private ObservableList<Admin> adminList;
     private Admin currentAdmin;
     private Label totalLabel;
@@ -44,7 +43,7 @@ public class AdminManagementView extends VBox {
     private void setupUI() {
         setSpacing(20);
         setPadding(new Insets(30));
-        setStyle("-fx-background-color: #ecf0f1;");
+        setStyle("-fx-background-color: linear-gradient(135deg, #1b37b3ff 0%, #8c4ecaff 100%);");
         
         // Header
         VBox header = createHeader();
@@ -55,12 +54,12 @@ public class AdminManagementView extends VBox {
         // Toolbar
         HBox toolbar = createToolbar();
         
-        // Table Container
-        VBox tableContainer = createTableContainer();
+        // Cards Container
+        ScrollPane cardsContainer = createTableContainer();
         
         // Add all components
-        getChildren().addAll(header, statsCards, toolbar, tableContainer);
-        VBox.setVgrow(tableContainer, Priority.ALWAYS);
+        getChildren().addAll(header, statsCards, toolbar, cardsContainer);
+        VBox.setVgrow(cardsContainer, Priority.ALWAYS);
     }
     
     private VBox createHeader() {
@@ -174,18 +173,32 @@ public class AdminManagementView extends VBox {
         return toolbar;
     }
     
-    private VBox createTableContainer() {
-        VBox container = new VBox();
-        container.setStyle("-fx-background-color: white; -fx-background-radius: 8; " +
-                          "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 3);");
-        container.setPadding(new Insets(20));
+    private ScrollPane createTableContainer() {
+        // FlowPane untuk card grid layout
+        FlowPane cardsGrid = new FlowPane(20, 20);
+        cardsGrid.setPadding(new Insets(20));
+        cardsGrid.setAlignment(Pos.TOP_LEFT);
+        cardsGrid.setStyle("-fx-background-color: #ecf0f1;");
         
-        adminTable = createAdminTable();
+        // Create cards from admin list
+        for (Admin admin : adminList) {
+            boolean isCurrentUser = (admin.getId() == currentAdmin.getId());
+            AdminCard card = new AdminCard(
+                admin,
+                () -> showEditDialog(admin),
+                () -> showDeleteDialog(admin),
+                isCurrentUser
+            );
+            cardsGrid.getChildren().add(card);
+        }
         
-        container.getChildren().add(adminTable);
-        VBox.setVgrow(adminTable, Priority.ALWAYS);
+        // Wrap in ScrollPane
+        ScrollPane scrollPane = new ScrollPane(cardsGrid);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background-color: #ecf0f1; -fx-background: #ecf0f1;");
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
         
-        return container;
+        return scrollPane;
     }
     
     private TableView<Admin> createAdminTable() {
@@ -363,6 +376,103 @@ public class AdminManagementView extends VBox {
         adminList.clear();
         adminList.addAll(admins);
         updateStats();
+        
+        // Refresh cards display
+        refreshCardsDisplay();
+    }
+    
+    private void refreshCardsDisplay() {
+        getChildren().clear();
+        VBox header = createHeader();
+        HBox statsCards = createStatsCards();
+        HBox toolbar = createToolbar();
+        ScrollPane cardsContainer = createTableContainer();
+        
+        getChildren().addAll(header, statsCards, toolbar, cardsContainer);
+        VBox.setVgrow(cardsContainer, Priority.ALWAYS);
+    }
+    
+    private void showEditDialog(Admin admin) {
+        // Reuse add dialog but pre-fill with admin data
+        Dialog<Admin> dialog = new Dialog<>();
+        dialog.setTitle("Edit Admin");
+        dialog.setHeaderText("Update administrator account");
+        
+        ButtonType updateButtonType = new ButtonType("Update", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(updateButtonType, ButtonType.CANCEL);
+        
+        GridPane grid = new GridPane();
+        grid.setHgap(15);
+        grid.setVgap(15);
+        grid.setPadding(new Insets(20));
+        
+        TextField usernameField = new TextField(admin.getUsername());
+        usernameField.setPromptText("Enter username");
+        
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Leave empty to keep current");
+        
+        ComboBox<String> roleComboBox = new ComboBox<>();
+        roleComboBox.getItems().addAll("ADMIN", "SUPER_ADMIN");
+        roleComboBox.setValue(admin.getRole());
+        
+        grid.add(new Label("Username:"), 0, 0);
+        grid.add(usernameField, 1, 0);
+        grid.add(new Label("New Password:"), 0, 1);
+        grid.add(passwordField, 1, 1);
+        grid.add(new Label("Role:"), 0, 2);
+        grid.add(roleComboBox, 1, 2);
+        
+        dialog.getDialogPane().setContent(grid);
+        
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == updateButtonType) {
+                admin.setUsername(usernameField.getText());
+                if (!passwordField.getText().isEmpty()) {
+                    admin.setPassword(passwordField.getText());
+                }
+                admin.setRole(roleComboBox.getValue());
+                return admin;
+            }
+            return null;
+        });
+        
+        Optional<Admin> result = dialog.showAndWait();
+        result.ifPresent(updatedAdmin -> {
+            // Use existing methods from AdminService
+            if (adminService.createAdmin(updatedAdmin.getUsername(), updatedAdmin.getPassword(), updatedAdmin.getRole())) {
+                showAlert("Success", "Admin updated successfully!", Alert.AlertType.INFORMATION);
+                loadAdmins();
+            } else {
+                showAlert("Error", "Failed to update admin.", Alert.AlertType.ERROR);
+            }
+        });
+    }
+    
+    private void showDeleteDialog(Admin admin) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Delete Admin");
+        confirm.setHeaderText("Are you sure you want to delete this admin?");
+        confirm.setContentText("Username: " + admin.getUsername() + "\nRole: " + admin.getRole());
+        
+        Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            boolean success = adminService.deleteAdmin(admin.getId());
+            if (success) {
+                showAlert("Success", "Admin deleted successfully!", Alert.AlertType.INFORMATION);
+                loadAdmins();
+            } else {
+                showAlert("Error", "Failed to delete admin.", Alert.AlertType.ERROR);
+            }
+        }
+    }
+    
+    private void showSuccess(String message) {
+        showAlert("Success", message, Alert.AlertType.INFORMATION);
+    }
+    
+    private void showError(String message) {
+        showAlert("Error", message, Alert.AlertType.ERROR);
     }
     
     private void updateStats() {
