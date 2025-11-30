@@ -38,13 +38,22 @@ public class DatabaseUtil {
     private static void loadEnvFile() throws IOException {
         Path envPath = Paths.get(".env");
         
+        // Check current directory first
         if (!Files.exists(envPath)) {
-            // Try parent directory
-            envPath = Paths.get("../.env");
+            // Try user's home directory config folder
+            String userHome = System.getProperty("user.home");
+            envPath = Paths.get(userHome, ".stadium-management", ".env");
+            
             if (!Files.exists(envPath)) {
-                throw new IOException(".env file not found in current or parent directory");
+                // Try parent directory as last resort
+                envPath = Paths.get("../.env");
+                if (!Files.exists(envPath)) {
+                    throw new IOException(".env file not found");
+                }
             }
         }
+        
+        System.out.println("Loading config from: " + envPath.toAbsolutePath());
         
         try (BufferedReader reader = new BufferedReader(new FileReader(envPath.toFile()))) {
             String line;

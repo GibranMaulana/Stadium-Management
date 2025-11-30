@@ -7,11 +7,9 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import org.openjfx.util.DatabaseUtil;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import org.openjfx.util.IconUtil;
 
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -34,6 +32,7 @@ public class DatabaseConfigDialog extends Stage {
     private Label statusLabel;
     private Button saveButton;
     private Button testButton;
+    private Button setupDbButton;
     
     private boolean configSaved = false;
     
@@ -41,26 +40,35 @@ public class DatabaseConfigDialog extends Stage {
         initOwner(owner);
         initModality(Modality.APPLICATION_MODAL);
         setTitle("Database Configuration");
-        setResizable(false);
+        setResizable(true);
+        setMinWidth(450);
+        setMinHeight(400);
         
         createUI();
         loadCurrentConfig();
     }
     
     private void createUI() {
-        VBox root = new VBox(0);
+        BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: #f5f5f5;");
         
         // Header
         VBox header = createHeader();
         
-        // Form area
+        // Form area wrapped in ScrollPane
         VBox formArea = createFormArea();
+        ScrollPane scrollPane = new ScrollPane(formArea);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background: white; -fx-background-color: white;");
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         
         // Footer with buttons
         HBox footer = createFooter();
         
-        root.getChildren().addAll(header, formArea, footer);
+        root.setTop(header);
+        root.setCenter(scrollPane);
+        root.setBottom(footer);
         
         Scene scene = new Scene(root, 500, 550);
         setScene(scene);
@@ -209,6 +217,18 @@ public class DatabaseConfigDialog extends Stage {
         );
         testButton.setOnAction(e -> testConnection());
         
+        setupDbButton = new Button("Setup Database");
+        setupDbButton.setGraphic(IconUtil.createIcon(FontAwesomeIcon.COG, 14));
+        setupDbButton.setStyle(
+            "-fx-background-color: #9C27B0;" +
+            "-fx-text-fill: white;" +
+            "-fx-font-size: 13px;" +
+            "-fx-padding: 10px 20px;" +
+            "-fx-background-radius: 5px;" +
+            "-fx-cursor: hand;"
+        );
+        setupDbButton.setOnAction(e -> setupDatabase());
+        
         Button cancelButton = new Button("Cancel");
         cancelButton.setStyle(
             "-fx-background-color: #6c757d;" +
@@ -233,14 +253,40 @@ public class DatabaseConfigDialog extends Stage {
         );
         saveButton.setOnAction(e -> saveConfiguration());
         
-        footer.getChildren().addAll(testButton, cancelButton, saveButton);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        footer.getChildren().addAll(setupDbButton, spacer, testButton, cancelButton, saveButton);
         return footer;
+    }
+    
+    private java.nio.file.Path getConfigFilePath() {
+        // Try current directory first (for development)
+        java.nio.file.Path localPath = Paths.get(".env");
+        if (Files.exists(localPath) && Files.isWritable(localPath.getParent())) {
+            return localPath;
+        }
+        
+        // Use user's home directory for production (installed apps)
+        String userHome = System.getProperty("user.home");
+        java.nio.file.Path appDataPath = Paths.get(userHome, ".stadium-management");
+        
+        try {
+            // Create directory if it doesn't exist
+            if (!Files.exists(appDataPath)) {
+                Files.createDirectories(appDataPath);
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to create config directory: " + e.getMessage());
+        }
+        
+        return appDataPath.resolve(".env");
     }
     
     private void loadCurrentConfig() {
         try {
             // Load from .env file
-            java.nio.file.Path envPath = Paths.get(".env");
+            java.nio.file.Path envPath = getConfigFilePath();
             if (Files.exists(envPath)) {
                 Map<String, String> config = parseEnvFile(envPath);
                 
@@ -330,10 +376,21 @@ public class DatabaseConfigDialog extends Stage {
         
         try {
             String envContent = buildEnvFileContent();
+            java.nio.file.Path envPath = getConfigFilePath();
             
-            try (FileWriter writer = new FileWriter(".env")) {
-                writer.write(envContent);
+            // Ensure parent directory exists
+            java.nio.file.Path parentDir = envPath.getParent();
+            if (parentDir != null && !Files.exists(parentDir)) {
+                Files.createDirectories(parentDir);
             }
+            
+            // Write using Files API
+            Files.write(envPath, envContent.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                java.nio.file.StandardOpenOption.CREATE,
+                java.nio.file.StandardOpenOption.TRUNCATE_EXISTING,
+                java.nio.file.StandardOpenOption.WRITE);
+            
+            System.out.println("Configuration saved to: " + envPath.toAbsolutePath());
             
             showStatus("✓ Configuration saved successfully!", true);
             configSaved = true;
@@ -350,6 +407,10 @@ public class DatabaseConfigDialog extends Stage {
             
         } catch (IOException e) {
             showStatus("✗ Failed to save configuration: " + e.getMessage(), false);
+            saveButton.setDisable(false);
+            saveButton.setText("Save Configuration");
+        } catch (Exception e) {
+            showStatus("✗ Failed to save: " + e.getMessage(), false);
             saveButton.setDisable(false);
             saveButton.setText("Save Configuration");
         }
@@ -445,6 +506,135 @@ public class DatabaseConfigDialog extends Stage {
             "-fx-border-radius: 5px;"
         );
         statusLabel.setVisible(true);
+    }
+    
+    private void setupDatabase() {
+        if (!validateInput()) return;
+        
+        Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmDialog.setTitle("Setup Database");
+        confirmDialog.setHeaderText("Initialize Database Schema");
+        confirmDialog.setContentText(
+            "This will create the StadiumDB database and all required tables.\\n\\n" +
+            "⚠️ Warning: If the database already exists, some operations may fail.\\n\\n" +
+            "Continue with database setup?"
+        );
+        
+        if (confirmDialog.showAndWait().orElse(null) != javafx.scene.control.ButtonType.OK) {
+            return;
+        }
+        
+        setupDbButton.setDisable(true);
+        setupDbButton.setText("Setting up...");
+        statusLabel.setVisible(false);
+        
+        new Thread(() -> {
+            try {
+                String host = hostField.getText().trim();
+                String port = portField.getText().trim();
+                String username = usernameField.getText().trim();
+                String password = passwordField.getText();
+                String encrypt = encryptCheckBox.isSelected() ? "true" : "false";
+                
+                // SQL files to execute in order
+                String[] sqlFiles = {
+                    "/database/01_initial_setup.sql",
+                    "/database/02_sync_seats.sql",
+                    "/database/03_features_roles_staff_inventory.sql",
+                    "/database/04_add_inventory_fields.sql",
+                    "/database/06_event_expenses.sql",
+                    "/database/07_allow_null_seatid_for_standing_areas.sql"
+                };
+                
+                StringBuilder result = new StringBuilder();
+                int successCount = 0;
+                
+                for (int i = 0; i < sqlFiles.length; i++) {
+                    String sqlFile = sqlFiles[i];
+                    String fileName = sqlFile.substring(sqlFile.lastIndexOf('/') + 1);
+                    
+                    javafx.application.Platform.runLater(() -> 
+                        statusLabel.setText("Executing: " + fileName + "...")
+                    );
+                    
+                    try {
+                        String sqlContent = readResourceFile(sqlFile);
+                        
+                        // For first file, connect without database; for others, use StadiumDB
+                        String dbName = (i == 0) ? "master" : databaseField.getText().trim();
+                        String connectionUrl = String.format(
+                            "jdbc:sqlserver://%s:%s;databaseName=%s;encrypt=%s;trustServerCertificate=true",
+                            host, port, dbName, encrypt
+                        );
+                        
+                        executeSqlScript(connectionUrl, username, password, sqlContent);
+                        successCount++;
+                        result.append("✓ ").append(fileName).append("\\n");
+                        
+                    } catch (Exception e) {
+                        result.append("✗ ").append(fileName).append(": ").append(e.getMessage()).append("\\n");
+                    }
+                }
+                
+                final int finalSuccessCount = successCount;
+                javafx.application.Platform.runLater(() -> {
+                    setupDbButton.setDisable(false);
+                    setupDbButton.setText("Setup Database");
+                    
+                    if (finalSuccessCount == sqlFiles.length) {
+                        showStatus("✓ Database setup completed successfully!", true);
+                    } else {
+                        showStatus("⚠ Setup completed with some errors ("+finalSuccessCount+"/"+sqlFiles.length+")", false);
+                    }
+                });
+                
+            } catch (Exception e) {
+                javafx.application.Platform.runLater(() -> {
+                    showStatus("✗ Database setup failed: " + e.getMessage(), false);
+                    setupDbButton.setDisable(false);
+                    setupDbButton.setText("Setup Database");
+                });
+            }
+        }).start();
+    }
+    
+    private String readResourceFile(String resourcePath) throws IOException {
+        try (java.io.InputStream is = getClass().getResourceAsStream(resourcePath);
+             java.io.BufferedReader reader = new java.io.BufferedReader(
+                 new java.io.InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8))) {
+            
+            if (is == null) {
+                throw new IOException("Resource not found: " + resourcePath);
+            }
+            
+            StringBuilder content = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                content.append(line).append("\\n");
+            }
+            return content.toString();
+        }
+    }
+    
+    private void executeSqlScript(String connectionUrl, String username, String password, String sqlScript) throws Exception {
+        try (Connection conn = java.sql.DriverManager.getConnection(connectionUrl, username, password);
+             java.sql.Statement stmt = conn.createStatement()) {
+            
+            // Split by GO statement (SQL Server batch separator)
+            String[] batches = sqlScript.split("(?i)\\\\bGO\\\\b");
+            
+            for (String batch : batches) {
+                String trimmedBatch = batch.trim();
+                if (!trimmedBatch.isEmpty() && !trimmedBatch.startsWith("--")) {
+                    try {
+                        stmt.execute(trimmedBatch);
+                    } catch (Exception e) {
+                        // Log but continue (some statements may fail if already exist)
+                        System.err.println("Warning: " + e.getMessage());
+                    }
+                }
+            }
+        }
     }
     
     private String createInputStyle() {

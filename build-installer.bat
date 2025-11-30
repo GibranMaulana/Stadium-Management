@@ -39,6 +39,12 @@ if not exist "icon.ico" (
     echo [Warning] icon.ico not found, using default icon
 )
 
+REM Step 2.5: Ensure database scripts are in resources
+echo [Step 2] Copying database scripts to resources...
+if not exist "src\main\resources\database" mkdir "src\main\resources\database"
+copy /Y "database\*.sql" "src\main\resources\database\" >nul 2>&1
+echo [OK] Database scripts copied
+
 REM Step 3: Create installer directory
 echo [Step 2] Preparing jpackage...
 set INSTALLER_DIR=target\installer
@@ -51,8 +57,8 @@ jpackage ^
     --input target ^
     --name "Stadium Management System" ^
     --main-jar "stadium-management-1.0.0.jar" ^
-    --main-class org.openjfx.App ^
-    --type exe ^
+    --main-class org.openjfx.Launcher ^
+    --type msi ^
     --app-version 1.0.0 ^
     --vendor "Stadium Management Team" ^
     --description "Complete Stadium Management System for ticket booking, inventory, and reporting" ^
