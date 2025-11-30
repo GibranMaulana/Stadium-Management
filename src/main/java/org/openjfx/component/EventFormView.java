@@ -462,7 +462,9 @@ public class EventFormView extends VBox {
                     return;
                 }
                 // Validate section capacity doesn't exceed its physical maximum
-                if (row.getCapacity() > row.getSection().getTotalCapacity()) {
+                // Skip this check for field sections (which have 0 fixed capacity)
+                if (row.getSection().getTotalCapacity() > 0 && 
+                    row.getCapacity() > row.getSection().getTotalCapacity()) {
                     showError("Section '" + row.getSection().getSectionName() + "' capacity (" + 
                              row.getCapacity() + " seats) exceeds its maximum capacity (" + 
                              row.getSection().getTotalCapacity() + " seats)!");
@@ -621,12 +623,14 @@ public class EventFormView extends VBox {
                     if (!newVal.isEmpty()) {
                         try {
                             int enteredCapacity = Integer.parseInt(newVal);
-                            if (enteredCapacity > section.getTotalCapacity()) {
-                                // Show error styling
+                            // Skip validation for field sections (totalCapacity = 0)
+                            // They can have any capacity for the event
+                            if (section.getTotalCapacity() > 0 && enteredCapacity > section.getTotalCapacity()) {
+                                // Show error styling (only for tribune sections)
                                 capacityField.setStyle("-fx-pref-height: 32; -fx-font-size: 12; -fx-border-color: #e74c3c; -fx-border-width: 2;");
                             } else {
                                 // Normal styling
-                                capacityField.setStyle("-fx-pref-height: 32; -fx-font-size: 12;");
+                                capacityField.setStyle("-fx-pref-height: 32; -fx-font-size: 12; -fx-border-color: #4CAF50; -fx-border-width: 1;");
                             }
                         } catch (NumberFormatException e) {
                             capacityField.setStyle("-fx-pref-height: 32; -fx-font-size: 12;");

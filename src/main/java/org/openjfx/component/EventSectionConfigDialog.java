@@ -207,7 +207,9 @@ public class EventSectionConfigDialog extends Stage {
         infoIcon.setStyle("-fx-text-fill: #2196F3;");
         
         Label infoText = new Label(
-            "Set a custom title (e.g., VIP, Standard, Premium) and price for each section."
+            "Set a custom title (e.g., VIP, Standard, Premium) and price for each section.\n" +
+            "For field/standing areas with 0 fixed seats, you can set a custom capacity for this event.\n" +
+            "Leave both title and price empty to skip a section."
         );
         infoText.setWrapText(true);
         infoText.setStyle(
@@ -279,7 +281,8 @@ public class EventSectionConfigDialog extends Stage {
         
         System.out.println("DEBUG: Total capacity: " + totalCapacity + ", Event max: " + eventTotalSeats);
         
-        // Validate against event's maximum capacity
+        // For Concert events with field/standing areas, allow flexible capacity
+        // Only validate if total capacity exceeds event maximum
         if (totalCapacity > eventTotalSeats) {
             System.out.println("DEBUG: CAPACITY EXCEEDED! Showing error");
             showError(
@@ -288,11 +291,15 @@ public class EventSectionConfigDialog extends Stage {
                 "Configured Sections Total: " + totalCapacity + " seats\n" +
                 "Excess: " + (totalCapacity - eventTotalSeats) + " seats\n\n" +
                 "Please:\n" +
+                "- Reduce capacity for some sections, OR\n" +
                 "- Remove some sections (leave title and price empty), OR\n" +
                 "- Increase the event's total seats capacity"
             );
             return;
         }
+        
+        // Note: We allow totalCapacity < eventTotalSeats for events with variable capacity
+        // (e.g., concerts with standing areas that can be adjusted)
         
         saveButton.setDisable(true);
         saveButton.setText("Saving...");

@@ -1,24 +1,19 @@
 package org.openjfx.model;
-
-/**
- * Admin model class for authentication
- * Enhanced with role-based access control
- */
 public class Admin {
     private int id;
     private String username;
     private String password;
-    private String role; // NEW: ADMIN or SUPER_ADMIN
+    private String role; 
     
     public Admin() {
-        this.role = "ADMIN"; // Default role
+        this.role = "ADMIN"; 
     }
     
     public Admin(int id, String username, String password) {
         this.id = id;
         this.username = username;
         this.password = password;
-        this.role = "ADMIN"; // Default role
+        this.role = "ADMIN"; 
     }
     
     public Admin(int id, String username, String password, String role) {

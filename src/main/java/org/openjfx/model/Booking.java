@@ -4,9 +4,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Model class representing a customer booking
- */
+
 public class Booking {
     private int bookingId;
     private int eventId;
@@ -16,16 +14,14 @@ public class Booking {
     private String customerPhone;
     private int totalSeats;
     private double totalPrice;
-    private String bookingStatus; // CONFIRMED, CANCELLED
+    private String bookingStatus; 
     private Timestamp bookingDate;
     private Timestamp createdAt;
     private Timestamp updatedAt;
     
-    // Additional fields for display
     private String eventName;
     private List<BookingSeat> bookingSeats;
     
-    // Constructors
     public Booking() {
         this.bookingSeats = new ArrayList<>();
     }
