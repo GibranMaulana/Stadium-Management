@@ -26,8 +26,8 @@ public class StaffCard extends VBox {
     private final NumberFormat currencyFormat;
     private final DateTimeFormatter dateFormatter;
     
-    private static final String ACTIVE_GRADIENT = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
-    private static final String INACTIVE_GRADIENT = "linear-gradient(135deg, #a8caba 0%, #5d4157 100%)";
+    private static final String ACTIVE_GRADIENT = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
+    private static final String INACTIVE_GRADIENT = "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)";
     
     public StaffCard(Staff staff, Runnable onView, Runnable onEdit, Runnable onToggle) {
         this.staff = staff;
@@ -75,13 +75,13 @@ public class StaffCard extends VBox {
         iconBox.setAlignment(Pos.CENTER);
         iconBox.setPrefSize(50, 50);
         iconBox.setStyle(
-            "-fx-background-color: rgba(195, 241, 255, 0.94);" +
+            "-fx-background-color: rgba(255,255,255,0.25);" +
             "-fx-background-radius: 25;"
         );
         
         FontAwesomeIconView icon = new FontAwesomeIconView(FontAwesomeIcon.USER);
         icon.setSize("24");
-        icon.setGlyphStyle("-fx-fill: rgba(59, 183, 255, 0.9); -fx-font-family: FontAwesome; -fx-font-size: 24px;");
+        icon.setGlyphStyle("-fx-fill: rgba(63, 178, 255, 0.9); -fx-font-family: FontAwesome; -fx-font-size: 24px;");
         iconBox.getChildren().add(icon);
         
         Region spacer = new Region();
@@ -89,10 +89,16 @@ public class StaffCard extends VBox {
         
         Label statusBadge = new Label(staff.isActive() ? "ACTIVE" : "INACTIVE");
         statusBadge.setPadding(new Insets(6, 14, 6, 14));
+        String badgeColor = staff.isActive() ? 
+            "rgba(150, 150, 150, 0.95)" : 
+            "rgba(70, 65, 65, 0.95)";   
+        String badgeTextColor = staff.isActive() ?
+            "#09ff00ff" : 
+            "#dc2626";  
         statusBadge.setStyle(
-            "-fx-background-color: rgba(255,255,255,0.3);" +
+            "-fx-background-color: " + badgeColor + ";" +
             "-fx-background-radius: 20;" +
-            "-fx-text-fill: rgba(57, 231, 66, 0.9);" +
+            "-fx-text-fill: " + badgeTextColor + ";" +
             "-fx-font-size: 11px;" +
             "-fx-font-weight: 700;"
         );
@@ -103,8 +109,8 @@ public class StaffCard extends VBox {
         nameLabel.setStyle(
             "-fx-font-size: 22px;" +
             "-fx-font-weight: 700;" +
-            "-fx-text-fill: rgba(0, 0, 0, 1);" +
-            "-fx-effect: dropshadow(gaussian, rgba(153, 148, 148, 1), 2, 0, 0, 1);"
+            "-fx-text-fill: rgba(35, 156, 248, 0.87);" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 2, 0, 0, 1);"
         );
         nameLabel.setWrapText(true);
         
