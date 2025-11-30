@@ -11,8 +11,11 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import org.openjfx.component.DatabaseConfigDialog;
 import org.openjfx.model.Admin;
 import org.openjfx.service.AdminService;
+import org.openjfx.util.IconUtil;
+import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 
 /**
  * Controller for the Login page
@@ -84,7 +87,7 @@ public class LoginController {
         messageLabel.setMaxWidth(350);
         grid.add(messageLabel, 0, 2, 2, 1);
         
-        // Login button
+        // Buttons
         Button loginButton = new Button("Login");
         loginButton.setPrefWidth(120);
         loginButton.setPrefHeight(35);
@@ -92,7 +95,7 @@ public class LoginController {
                             "-fx-font-size: 14px; -fx-font-weight: bold; " +
                             "-fx-background-radius: 5; -fx-cursor: hand;");
         
-        // Hover effect
+        // Hover effect for login button
         loginButton.setOnMouseEntered(e -> 
             loginButton.setStyle("-fx-background-color: #2980b9; -fx-text-fill: white; " +
                                 "-fx-font-size: 14px; -fx-font-weight: bold; " +
@@ -104,9 +107,31 @@ public class LoginController {
                                 "-fx-background-radius: 5; -fx-cursor: hand;")
         );
         
+        // Database settings button
+        Button dbConfigButton = new Button("Database Settings");
+        dbConfigButton.setGraphic(IconUtil.createIcon(FontAwesomeIcon.COG, 14));
+        dbConfigButton.setPrefWidth(160);
+        dbConfigButton.setPrefHeight(35);
+        dbConfigButton.setStyle("-fx-background-color: #95a5a6; -fx-text-fill: white; " +
+                               "-fx-font-size: 13px; -fx-font-weight: bold; " +
+                               "-fx-background-radius: 5; -fx-cursor: hand;");
+        
+        // Hover effect for db config button
+        dbConfigButton.setOnMouseEntered(e -> 
+            dbConfigButton.setStyle("-fx-background-color: #7f8c8d; -fx-text-fill: white; " +
+                                   "-fx-font-size: 13px; -fx-font-weight: bold; " +
+                                   "-fx-background-radius: 5; -fx-cursor: hand;")
+        );
+        dbConfigButton.setOnMouseExited(e -> 
+            dbConfigButton.setStyle("-fx-background-color: #95a5a6; -fx-text-fill: white; " +
+                                   "-fx-font-size: 13px; -fx-font-weight: bold; " +
+                                   "-fx-background-radius: 5; -fx-cursor: hand;")
+        );
+        dbConfigButton.setOnAction(e -> openDatabaseConfig());
+        
         HBox buttonBox = new HBox(10);
         buttonBox.setAlignment(Pos.CENTER);
-        buttonBox.getChildren().add(loginButton);
+        buttonBox.getChildren().addAll(dbConfigButton, loginButton);
         grid.add(buttonBox, 0, 3, 2, 1);
         
         // Login button action
@@ -175,6 +200,25 @@ public class LoginController {
             label.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
         } else {
             label.setStyle("-fx-text-fill: #34495e;");
+        }
+    }
+    
+    /**
+     * Open database configuration dialog
+     */
+    private void openDatabaseConfig() {
+        DatabaseConfigDialog configDialog = new DatabaseConfigDialog(stage);
+        configDialog.showAndWait();
+        
+        // If configuration was saved, reload the .env
+        if (configDialog.isConfigSaved()) {
+            try {
+                // Reload dotenv
+                io.github.cdimascio.dotenv.Dotenv.configure().ignoreIfMissing().load();
+                System.out.println("Database configuration reloaded successfully");
+            } catch (Exception e) {
+                System.err.println("Error reloading configuration: " + e.getMessage());
+            }
         }
     }
     
