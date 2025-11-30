@@ -2,6 +2,9 @@ package org.openjfx.component;
 
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import javafx.animation.FadeTransition;
+import javafx.animation.TranslateTransition;
+import javafx.animation.ParallelTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -12,6 +15,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.util.Duration;
 
 /**
  * Container view for Reports with three styled sub-buttons: Financial, Event, Stadium
@@ -172,17 +176,17 @@ public class ReportsMainView extends VBox {
 
     private void showFinancial() {
         setActiveButton(btnFinancial);
-        setVisibleIndex(0);
+        setVisibleIndexWithAnimation(0);
     }
 
     private void showEvent() {
         setActiveButton(btnEvent);
-        setVisibleIndex(1);
+        setVisibleIndexWithAnimation(1);
     }
 
     private void showStadium() {
         setActiveButton(btnStadium);
-        setVisibleIndex(2);
+        setVisibleIndexWithAnimation(2);
     }
 
     private void setVisibleIndex(int index) {
@@ -191,5 +195,34 @@ public class ReportsMainView extends VBox {
             contentPane.getChildren().get(i).setVisible(show);
             contentPane.getChildren().get(i).setManaged(show);
         }
+    }
+    
+    private void setVisibleIndexWithAnimation(int index) {
+        // Hide all views first
+        for (int i = 0; i < contentPane.getChildren().size(); i++) {
+            if (i != index) {
+                contentPane.getChildren().get(i).setVisible(false);
+                contentPane.getChildren().get(i).setManaged(false);
+            }
+        }
+        
+        // Show and animate the selected view
+        javafx.scene.Node targetView = contentPane.getChildren().get(index);
+        targetView.setVisible(true);
+        targetView.setManaged(true);
+        
+        // Fade in animation
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(400), targetView);
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+        
+        // Slide in animation from left
+        TranslateTransition slideIn = new TranslateTransition(Duration.millis(400), targetView);
+        slideIn.setFromX(30);
+        slideIn.setToX(0);
+        
+        // Play both animations together
+        ParallelTransition transition = new ParallelTransition(fadeIn, slideIn);
+        transition.play();
     }
 }

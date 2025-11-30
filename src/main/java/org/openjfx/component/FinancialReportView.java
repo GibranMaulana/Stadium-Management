@@ -2,6 +2,7 @@ package org.openjfx.component;
 
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import javafx.animation.ScaleTransition;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -19,6 +20,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.effect.DropShadow;
 import javafx.application.Platform;
+import javafx.util.Duration;
 import org.openjfx.model.Event;
 import org.openjfx.service.EventService;
 import org.openjfx.service.ReportService;
@@ -69,6 +71,7 @@ public class FinancialReportView extends VBox {
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);"
         );
         controlsCard.setPadding(new Insets(20));
+        setupCardHoverAnimation(controlsCard);
 
         HBox controls = new HBox(12);
         controls.setAlignment(Pos.CENTER_LEFT);
@@ -182,6 +185,10 @@ public class FinancialReportView extends VBox {
         rpLabel.setStyle("-fx-text-fill: #95a5a6; -fx-font-size: 12px;");
         
         card.getChildren().addAll(header, valueLabel, rpLabel);
+        
+        // Add hover animation
+        setupCardHoverAnimation(card);
+        
         return card;
     }
 
@@ -279,5 +286,18 @@ public class FinancialReportView extends VBox {
 
         public double getRevenue() { return revenue.get(); }
         public javafx.beans.property.DoubleProperty revenueProperty() { return revenue; }
+    }
+    
+    private void setupCardHoverAnimation(javafx.scene.Node card) {
+        ScaleTransition scaleUp = new ScaleTransition(Duration.millis(200), card);
+        scaleUp.setToX(1.02);
+        scaleUp.setToY(1.02);
+        
+        ScaleTransition scaleDown = new ScaleTransition(Duration.millis(200), card);
+        scaleDown.setToX(1.0);
+        scaleDown.setToY(1.0);
+        
+        card.setOnMouseEntered(e -> scaleUp.play());
+        card.setOnMouseExited(e -> scaleDown.play());
     }
 }

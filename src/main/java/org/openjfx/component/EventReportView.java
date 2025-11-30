@@ -2,6 +2,7 @@ package org.openjfx.component;
 
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIconView;
+import javafx.animation.ScaleTransition;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -10,6 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.util.Duration;
 import org.openjfx.model.Booking;
 import org.openjfx.model.BookingSeat;
 import org.openjfx.model.Event;
@@ -60,6 +62,7 @@ public class EventReportView extends BorderPane {
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);"
         );
         left.setPadding(new Insets(20));
+        setupCardHoverAnimation(left);
 
         Label eventsLabel = new Label("Event List");
         eventsLabel.setFont(Font.font("System", FontWeight.BOLD, 16));
@@ -124,6 +127,7 @@ public class EventReportView extends BorderPane {
         );
         right.setPadding(new Insets(20));
         HBox.setHgrow(right, Priority.ALWAYS);
+        setupCardHoverAnimation(right);
 
         Label detailsLabel = new Label("Event Details");
         detailsLabel.setFont(Font.font("System", FontWeight.BOLD, 16));
@@ -406,5 +410,18 @@ public class EventReportView extends BorderPane {
         });
 
         dlg.showAndWait();
+    }
+    
+    private void setupCardHoverAnimation(javafx.scene.Node card) {
+        ScaleTransition scaleUp = new ScaleTransition(Duration.millis(200), card);
+        scaleUp.setToX(1.01);
+        scaleUp.setToY(1.01);
+        
+        ScaleTransition scaleDown = new ScaleTransition(Duration.millis(200), card);
+        scaleDown.setToX(1.0);
+        scaleDown.setToY(1.0);
+        
+        card.setOnMouseEntered(e -> scaleUp.play());
+        card.setOnMouseExited(e -> scaleDown.play());
     }
 }
